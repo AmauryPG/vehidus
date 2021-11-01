@@ -4,17 +4,14 @@ from bpy import data as D
 import sys
 
 def avancer_distance_temps(distance, temps) :
-    
-
-def main():
     #bpy.ops.mesh.primitive_cube_add()
     #ob = bpy.context.active_object
     ob = bpy.data.objects["Voiture"]
     bpy.ops.object.shade_smooth()
 
     #set de mouvement
-    frames = [1, 20*24]
-    moveX = [0, 20]
+    frames = [1, temps*24]
+    moveX = [0, distance]
     moveY = [0, 0]
 
     #boucle d'animation
@@ -28,8 +25,6 @@ def main():
 
         bpy.ops.anim.keyframe_insert(type='LocRotScale')
 
-    #joue l'animation montrée
-    bpy.ops.screen.animation_play()
-
-#fonction principal
-main()
+if __name__ == "__main__":
+    avancer_distance_temps(20, 5)
+    
