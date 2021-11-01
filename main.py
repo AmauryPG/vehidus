@@ -2,8 +2,16 @@ import bpy
 from bpy import context as C
 from bpy import data as D
 import sys
+import time 
+ 
+def forward(position, distance, deltatTime):
+    vitesse = 7000
+    if position <= distance:
+        position = position + vitesse * deltatTime 
+    return position
 
-def main():
+
+if __name__ == "__main__":
     #bpy.ops.mesh.primitive_cube_add()
     #ob = bpy.context.active_object
     ob = bpy.data.objects["Voiture"]
@@ -11,24 +19,27 @@ def main():
 
     #set de mouvement
     rotations = [0, 6.3]
-    frames = [1, 250]
-    moveX = [0, 5]
+    frames = [1, 250] 
     moveY = [0, 2]
+    prevTime = time.time() 
+    mvX = 0
+    mvY = 0
 
     #boucle d'animation
     for i in range(len(rotations)):
         rotation = rotations[i]
         frame = frames[i]
-        mvX = moveX[i]
-        mvY = moveY[i]
-        bpy.context.scene.frame_set(frame)
-        ob.location[0] = mvX
-        ob.location[1] = mvY
 
-        bpy.ops.anim.keyframe_insert(type='LocRotScale')
+        curtTime = time.time() 
+
+        bpy.context.scene.frame_set(frame)
+        deltatTime = curtTime - prevTime
+        ob.location[0] = forward(mvX, 100, deltatTime)
+        ob.location[1] = forward(mvY, 2, deltatTime)
+
+        prevTime = curtTime
+
+        bpy.ops.anim.keyframe_insert(type='LocRotScale', confirm_success=True)
 
     #joue l'animation montrée
     bpy.ops.screen.animation_play()
-
-#fonction principal
-main()
