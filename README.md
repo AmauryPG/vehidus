@@ -5,6 +5,8 @@
 [Comment arrêter un fichier executé dans Blender?](#header2)   
 [Où est la sortie de commande(console)?](#header3)    
 [Quel est l'adresse IP du char?](#header4)    
+[Quel sont les standard de programmation ?](#header5)    
+[Quel sont les standard de documentation ?](#header6)    
 
 <a name="header1"/>
 
@@ -37,3 +39,19 @@ Selectionnez _Toggle System Console_ pour ouvrir la sortie de commande. Et voici
 
 ## Quel est l'adresse IP du char?
 Dans le routeur dlink, le IP est 192.168.0.101
+
+<a name="header5"/>
+
+## Quel sont les standard de programmation ?
+
+Nom en général : en anglais
+Nom de classe : Camel back avec première lettre en majuscule (ex : NomDeClasse)
+Nom de variable : Camel back (ex : nomDeVariable)
+Nom de fichier : Avec underscore (ex : )
+
+<a name="header6"/>
+
+## Quel sont les standard de documentation ?
+
+Nom de fichier : Lettre de la section suivit d'un tirer(-) et le nom du fichier séparer avec espace (ex : A - Gantt)
+Le contenu et le nom du fichier sont en français
