@@ -2,29 +2,40 @@ import bpy
 from bpy import context as C
 from bpy import data as D
 import sys
+import numpy as np
 
-def avancer_distance_temps(distance, temps) :
-    #bpy.ops.mesh.primitive_cube_add()
-    #ob = bpy.context.active_object
-    ob = bpy.data.objects["Voiture"]
-    bpy.ops.object.shade_smooth()
+FPS = 24
+AI_UPDATE_RATE = 5
+TIME_BETWEEN_AI_UPDATE = AI_UPDATE_RATE/FPS
 
-    #set de mouvement
-    frames = [1, temps*24]
-    moveX = [0, distance]
-    moveY = [0, 0]
-
-    #boucle d'animation
+def turnAngleSpeed(angle, speed, lastFrame, ob):
+    facingAngle = ob.rotation_euler[2]
+    turn = [facingAngle, facingAngle + angle]
+    frames = [lastFrame,  lastFrame + AI_UPDATE_RATE]
+    distance = TIME_BETWEEN_AI_UPDATE * speed
+    positionFinalX = [ob.location[0], ob.location[0] + np.cos(facingAngle + angle)*distance]
+    positionFinalY = [ob.location[1], ob.location[1] + np.sin(facingAngle + angle)*distance]
+    
     for i in range(len(frames)):
         frame = frames[i]
-        mvX = moveX[i]
-        mvY = moveY[i]
         bpy.context.scene.frame_set(frame)
-        ob.location[0] = mvX
-        ob.location[1] = mvY
-
+        ob.location[0] = positionFinalX[i]
+        ob.location[1] = positionFinalY[i]
+        ob.rotation_euler[2] = turn[i]
         bpy.ops.anim.keyframe_insert(type='LocRotScale')
-
+    return lastFrame + AI_UPDATE_RATE
 if __name__ == "__main__":
-    avancer_distance_temps(20, 5)
+    lastFrame = 1
+    ob = bpy.data.objects["Voiture"]
+    ob.rotation_euler[2] = 0 
+    ob.location[0] = 0
+    ob.location[1] = 0
+    for i in range(10):
+        lastFrame = turnAngleSpeed(np.pi/10, 10, lastFrame, ob)
+    for i in range(10):
+        lastFrame = turnAngleSpeed(-np.pi/10, 10, lastFrame, ob)
+    for i in range(10):
+        lastFrame = turnAngleSpeed(-np.pi/10, 10, lastFrame, ob)
+    for i in range(10):
+        lastFrame = turnAngleSpeed(np.pi/10, 10, lastFrame, ob)
     
