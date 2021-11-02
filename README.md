@@ -44,14 +44,14 @@ Dans le routeur dlink, le IP est 192.168.0.101
 
 ## Quel sont les standard de programmation ?
 
-Nom en général : en anglais
-Nom de classe : Camel back avec première lettre en majuscule (ex : NomDeClasse)
-Nom de variable : Camel back (ex : nomDeVariable)
+Nom en général : en anglais\
+Nom de classe : Camel back avec première lettre en majuscule (ex : NomDeClasse)\
+Nom de variable : Camel back (ex : nomDeVariable)\
 Nom de fichier : Avec underscore (ex : )
 
 <a name="header6"/>
 
 ## Quel sont les standard de documentation ?
 
-Nom de fichier : Lettre de la section suivit d'un tirer(-) et le nom du fichier séparer avec espace (ex : A - Gantt)
+Nom de fichier : Lettre de la section suivit d'un tirer(-) et le nom du fichier séparer avec espace (ex : A - Gantt)\
 Le contenu et le nom du fichier sont en français
