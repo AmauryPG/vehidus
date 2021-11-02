@@ -33,5 +33,7 @@ Selectionnez _Toggle System Console_ pour ouvrir la sortie de commande. Et voici
 
 ![Capture d’écran (8)](https://user-images.githubusercontent.com/56097666/138791778-ffb19423-60dd-457c-984b-22f09dd5850a.png)
 
+<a name="header4"/>
+
 ## Quel est l'adresse IP du char?
 Dans le routeur dlink, le IP est 192.168.0.101
