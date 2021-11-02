@@ -30,6 +30,7 @@ if __name__ == "__main__":
     ob.rotation_euler[2] = 0 
     ob.location[0] = 0
     ob.location[1] = 0
+    ob.location[2] = 0.385
     for i in range(10):
         lastFrame = turnAngleSpeed(np.pi/10, 10, lastFrame, ob)
     for i in range(10):
