@@ -4,6 +4,7 @@
 [Comment executé un fichier Python dans Blender?](#header1)  
 [Comment arrêter un fichier executé dans Blender?](#header2)   
 [Où est la sortie de commande(console)?](#header3)    
+[Quel est l'adresse IP du char?](#header4)    
 
 <a name="header1"/>
 
@@ -31,3 +32,6 @@ Ouvrez l'onglet _Window_.
 Selectionnez _Toggle System Console_ pour ouvrir la sortie de commande. Et voici comment ouvrir la sortie de commande.
 
 ![Capture d’écran (8)](https://user-images.githubusercontent.com/56097666/138791778-ffb19423-60dd-457c-984b-22f09dd5850a.png)
+
+## Quel est l'adresse IP du char?
+Dans le routeur dlink, le IP est 192.168.0.101
