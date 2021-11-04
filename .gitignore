@@ -1,8 +1,8 @@
 # User-specific stuff:
-.idea/workspace.xml
-.idea/tasks.xml
-.idea/dictionaries
-.idea/vcs.xml
-.idea/jsLibraryMappings.xml
+AI/.idea/workspace.xml
+AI/.idea/tasks.xml
+AI/.idea/dictionaries
+AI/.idea/vcs.xml
+AI/.idea/jsLibraryMappings.xml
 
-__pycache__/
+AI/__pycache__/
