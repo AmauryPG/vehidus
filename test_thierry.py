@@ -40,7 +40,18 @@ if __name__ == "__main__":
     car.positionXYZ = [0,0,0.385]
     car.facingAngle = 0
     car.updateOb()
-    for i in range(0,50):
-        lastFrame = turnAngleSpeed(0,10,lastFrame,car)
+    lastFrame = 1
+    ob = bpy.data.objects["Voiture"]
+    ob.rotation_euler[2] = 0 
+    ob.location[0] = 0
+    ob.location[1] = 0
+    for i in range(10):
+        lastFrame = turnAngleSpeed(np.pi/10, 10, lastFrame, car)
+    for i in range(10):
+        lastFrame = turnAngleSpeed(-np.pi/10, 10, lastFrame, car)
+    for i in range(10):
+        lastFrame = turnAngleSpeed(-np.pi/10, 10, lastFrame, car)
+    for i in range(10):
+        lastFrame = turnAngleSpeed(np.pi/10, 10, lastFrame, car)
         
         
