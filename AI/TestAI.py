@@ -7,7 +7,7 @@ def inRange(value, refer, tolerance):
     return refer + tolerance >= value >= refer - tolerance
 
 def individualTestLineFollower(line, expectedSpeed, speedTolerance, expectedAngle, angleTolerance):
-    ai = AI()
+    ai = AI(speed)
 
     sucessTestSpeed = 0
     sucessTestAngle = 0
@@ -19,9 +19,9 @@ def individualTestLineFollower(line, expectedSpeed, speedTolerance, expectedAngl
         if inRange(ai.getAngle(), expectedAngle[i], angleTolerance):
             sucessTestAngle += 1
 
-    print("RESULTS")
+    print("RESULTS TEST SUCESS POURCENTANGE")
     print("SPEED : ", 100 * sucessTestSpeed / len(line), " %")
-    print("ANGLE : ", 100 * sucessTestAngle / len(line), " %")
+    print("ANGLE : ", 100 * sucessTestAngle / len(line), " %") 
 
 def testLineFollower():
     print("BEGIN : Test #0 line follower")
@@ -95,51 +95,52 @@ def testLineFollower():
     print("END : Test #0 line follower")
     print()
 
-
     print("BEGIN : Test #1 line follower")
     speedTolerance = 0.1
-    expectedSpeed = np.array([3.1,
-                              3.1,
-                              3.1,
-                              2.1,
-                              2.1,
-                              3.1,
-                              3.1,
-                              3.1,
-                              4.1,
-                              4.1,
-                              4.1,
-                              4.6,
-                              5.1,
-                              5.1,
-                              5.1,
-                              5.1,
-                              3.0999999999999996,
-                              3.0999999999999996,
-                              3.0999999999999996,
-                              3.0999999999999996])
+    expectedSpeed = np.array([
+                            100,
+                            100,
+                            100,
+                            99,
+                            100,
+                            100,
+                            100,
+                            100,
+                            100,
+                            100,
+                            100,
+                            100,
+                            100,
+                            100,
+                            100,
+                            100,
+                            98,
+                            100,
+                            100,
+                            100])
 
     angleTolerance = 0.1
-    expectedAngle = np.array([0.35,
-                              0.35,
-                              0.35,
-                              1.9315926535897932,
-                              1.9315926535897932,
-                              0.3500000000000001,
-                              0.3500000000000001,
-                              0.3500000000000001,
-                              1.9100000000000001,
-                              1.9100000000000001,
-                              1.9100000000000001,
-                              0.9584073464102065,
-                              0.0068146928204133594,
-                              0.0068146928204133594,
-                              0.0068146928204133594,
-                              0.0068146928204133594,
-                              2.598407346410206,
-                              2.598407346410206,
-                              2.598407346410206,
-                              2.598407346410206])
+    expectedAngle = np.array([
+                            0,
+                            0,
+                            0,
+                            - 1.56,
+                            0,
+                            1.56,
+                            0,
+                            0,
+                            1.56,
+                            0,
+                            0,
+                            - 2.19,
+                            - 1.23,
+                            0,
+                            0,
+                            0,
+                            - 0.55,
+                            0,
+                            0,
+                            0])
 
     line = np.array([[0, 0, 1, 0, 0],
                     [0, 0, 1, 0, 0],
