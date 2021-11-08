@@ -5,12 +5,9 @@ import sys
 import numpy as np
 import addon_utils
 
-# Parametres pour le render
 FPS = 24
-AI_UPDATE_RATE = 5
+AI_UPDATE_RATE = 1
 TIME_BETWEEN_AI_UPDATE = AI_UPDATE_RATE/FPS
-
-# Parametres de distances
 DISTANCE_X_CAPTEUR_LIGNE = 1.357
 DISTANCE_Y_CAPTEUR_LIGNE = 0.18
 DISTANCE_X_CAPTEUR_DISTANCE = 14.82
@@ -32,33 +29,31 @@ class ObjectCar :
     def updateSensorPos(self, frame):
         # Sensor Ligne
         self.lineSensorsArray[2].location = [(self.ob.location[0]+DISTANCE_X_CAPTEUR_LIGNE*np.cos(self.ob.rotation_euler[2])),
-                                self.ob.location[1]+DISTANCE_Y_CAPTEUR_LIGNE*np.sin(self.ob.rotation_euler[2]),
+                                self.ob.location[1]+DISTANCE_X_CAPTEUR_LIGNE*np.sin(self.ob.rotation_euler[2]),
                                 0]
-        self.lineSensorsArray[2].keyframe_insert(data_path="location", frame=frame)
-        
-        self.lineSensorsArray[0].location = [self.lineSensorsArray[2].location[0] - 2 * DISTANCE_X_CAPTEUR_LIGNE * np.sin(self.ob.rotation_euler[2]),
+        self.lineSensorsArray[0].location = [self.lineSensorsArray[2].location[0] - 2 * DISTANCE_Y_CAPTEUR_LIGNE * np.sin(self.ob.rotation_euler[2]),
                               self.lineSensorsArray[2].location[1] + 2 * DISTANCE_Y_CAPTEUR_LIGNE * np.cos(self.ob.rotation_euler[2]),
-                              0]
-        self.lineSensorsArray[0].keyframe_insert(data_path="location", frame=frame)                    
-        self.lineSensorsArray[1].location = [self.lineSensorsArray[2].location[0] - DISTANCE_X_CAPTEUR_LIGNE * np.sin(self.ob.rotation_euler[2]),
+                              0]             
+        self.lineSensorsArray[1].location = [self.lineSensorsArray[2].location[0] - DISTANCE_Y_CAPTEUR_LIGNE * np.sin(self.ob.rotation_euler[2]),
                               self.lineSensorsArray[2].location[1] + DISTANCE_Y_CAPTEUR_LIGNE * np.cos(self.ob.rotation_euler[2]),
-                              0]
-        self.lineSensorsArray[1].keyframe_insert(data_path="location", frame=frame)                      
-        self.lineSensorsArray[3].location = [self.lineSensorsArray[2].location[0] + DISTANCE_X_CAPTEUR_LIGNE * np.sin(self.ob.rotation_euler[2]),
+                              0]                     
+        self.lineSensorsArray[3].location = [self.lineSensorsArray[2].location[0] + DISTANCE_Y_CAPTEUR_LIGNE * np.sin(self.ob.rotation_euler[2]),
                               self.lineSensorsArray[2].location[1] - DISTANCE_Y_CAPTEUR_LIGNE * np.cos(self.ob.rotation_euler[2]),
-                              0]
-        self.lineSensorsArray[3].keyframe_insert(data_path="location", frame=frame)                    
-        self.lineSensorsArray[4].location = [self.lineSensorsArray[2].location[0] + 2 * DISTANCE_X_CAPTEUR_LIGNE * np.sin(self.ob.rotation_euler[2]),
+                              0]                 
+        self.lineSensorsArray[4].location = [self.lineSensorsArray[2].location[0] + 2 * DISTANCE_Y_CAPTEUR_LIGNE * np.sin(self.ob.rotation_euler[2]),
                               self.lineSensorsArray[2].location[1] - 2 * DISTANCE_Y_CAPTEUR_LIGNE * np.cos(self.ob.rotation_euler[2]),
                               0]
-        self.lineSensorsArray[4].keyframe_insert(data_path="location", frame=frame)
+        for cube in lineSensorsArray:
+            cube.rotation_euler[2] = self.ob.rotation_euler[2]
+            cube.keyframe_insert(data_path="location", frame=frame)
+            cube.keyframe_insert(data_path="rotation_euler", frame=frame)
         #Sensor distance
         self.distSensor = [self.ob.location[0]+DISTANCE_X_CAPTEUR_DISTANCE*np.cos(self.ob.rotation_euler[2]),
                         self.ob.location[0]+DISTANCE_X_CAPTEUR_DISTANCE*np.sin(self.ob.rotation_euler[2])]
         
         
 
-def turnAngleSpeed(angle, speed, lastFrame, car):
+def turnAngleSpeed(angle, speed, lastFrame, car, path):
     facingAngle = car.facingAngle
     turn = [facingAngle, facingAngle + angle]
     frames = [lastFrame,  lastFrame + AI_UPDATE_RATE]
@@ -73,6 +68,7 @@ def turnAngleSpeed(angle, speed, lastFrame, car):
         car.positionXYZ[1] = positionFinalY[i]
         car.facingAngle = turn[i]
         car.updateOb(frame)
+        print("S0 " + str(car.lineSensorsArray[0].collides(path)) + "S1 " + str(car.lineSensorsArray[1].collides(path))  + "S2 " + str(car.lineSensorsArray[2].collides(path)) + "S3 " + str(car.lineSensorsArray[3].collides(path)) + "S4 " + str(car.lineSensorsArray[4].collides(path)))
         car.ob.keyframe_insert(data_path="location", frame=frame)
         car.ob.keyframe_insert(data_path="rotation_euler", frame=frame)
     return lastFrame + AI_UPDATE_RATE
@@ -82,17 +78,24 @@ def turnAngleSpeed(angle, speed, lastFrame, car):
     
 if __name__ == "__main__":
     lastFrame = 1
+    path = bpy.data.objects["Path"]
     ob = bpy.data.objects["Voiture"]
+    ob.animation_data_clear()
     lineSensorsArray = [None] * 5
     for i in range(5):
         lineSensorsArray[i] = bpy.data.objects["SensorLine" + str(i)]
+        lineSensorsArray[i].animation_data_clear()
     car = ObjectCar(ob,lineSensorsArray)
     car.positionXYZ = [0,0,0.385]
     car.facingAngle = 0
     car.updateOb(lastFrame)
+    for i in range(0,40):
+        lastFrame = turnAngleSpeed(0,2,lastFrame,car, path)
     for i in range(0,10):
-        lastFrame = turnAngleSpeed(0,10,lastFrame,car)
+        lastFrame = turnAngleSpeed(np.pi/40, 2,lastFrame,car, path)
+    for i in range(0,40):
+        lastFrame = turnAngleSpeed(0, 2,lastFrame,car, path)
     for i in range(0,10):
-        lastFrame = turnAngleSpeed(np.pi/5,10,lastFrame,car)
+        lastFrame = turnAngleSpeed(-np.pi/40, 2,lastFrame,car, path)
         
     print("position de la voiture:" + str(car.positionXYZ))
