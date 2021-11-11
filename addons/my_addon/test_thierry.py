@@ -62,13 +62,14 @@ class ObjectCar :
         self.distSensor.location = [(self.ob.location[0]+DISTANCE_X_CAPTEUR_DISTANCE*np.cos(self.ob.rotation_euler[2])),
                                 self.ob.location[1]+DISTANCE_X_CAPTEUR_DISTANCE*np.sin(self.ob.rotation_euler[2]),self.ob.location[2] +
                                 DISTANCE_Z_CAPTEUR_DISTANCE]
-        self.distSensor.rotation_euler[1] = 90
-        self.distSensor.rotation_euler[2] = self.ob.rotation_euler[2]
+        self.distSensor.rotation_euler[1] = -np.pi/2
+        self.distSensor.rotation_euler[0] = self.ob.rotation_euler[2]
+        self.distSensor.rotation_euler[2] = 0
         self.distSensor.keyframe_insert(data_path="location", frame=frame)
         self.distSensor.keyframe_insert(data_path="rotation_euler", frame=frame)
         
         
-        self.sensorsValues = intersection_check(self.lineSensorsArray,self.path)
+        #self.sensorsValues = intersection_check(self.lineSensorsArray,self.path)
         self.sensorDist =  distance_check(self.distSensor,self.obstacles)
         
 def turnAngleSpeed(angle, speed, lastFrame, car):
@@ -121,6 +122,7 @@ def intersection_check(sensorList,path):
             else:
                 #print(sensor.name + " and " + path.name + " are not intersecting")
                 result.append(0)
+    print(result)
     return result
 
 def distance_check(sensorDist,Obstacles):
@@ -147,10 +149,10 @@ def distance_check(sensorDist,Obstacles):
             inter = obj_now_BVHtree.overlap(obj_next_BVHtree)
             #if list is empty, no objects are touching
             if inter != []:
-                xdist = Obs.location[0] - sensorDist[0]
-                ydist = Obs.location[1] - sensorDist[1]
+                xdist = Obj.location[0] - sensorDist.location[0]
+                ydist = Obj.location[1] - sensorDist.location[1]
                 Distance = np.sqrt(xdist**2 + ydist**2)
-                print("Car seeing " + Obj + " at " + Distance)
+                print("Car seeing " + Obj.name + " at " + str(Distance))
             else:
                 #print(sensor.name + " and " + path.name + " are not intersecting")
                 Distance = 100000
@@ -162,6 +164,8 @@ if __name__ == "__main__":
     lastFrame = 1
     path = bpy.data.objects["Path"]
     ob = bpy.data.objects["Voiture"]
+    obst1 = bpy.data.objects["Cube"]
+    obst2 = bpy.data.objects["Cube2"]
     ob.animation_data_clear()
     lineSensorsArray = [None] * 5
     for i in range(5):
@@ -170,15 +174,13 @@ if __name__ == "__main__":
         
     distSensor = bpy.data.objects["SensorDist"]
     distSensor.rotation_euler[0] = 0
-    distSensor.rotation_euler[1] = 90
+    distSensor.rotation_euler[1] = -np.pi/2
     distSensor.rotation_euler[2] = 0
     distSensor.animation_data_clear()
-    obstacles = [bpy.data.objects["Cube"], bpy.data.objects["Cube.001"]]
+    obstacles = [obst1, obst2]
     car = ObjectCar(ob,lineSensorsArray,distSensor,path,obstacles)
     car.positionXYZ = [0,0,0.385]
     car.facingAngle = 0
     car.updateOb(lastFrame)
     for i in range(0,30):
         lastFrame,sensorsValues,distValue = turnAngleSpeed(np.pi/10,2,lastFrame,car)
-        print(sensorsValues)
-        print(distValue)
