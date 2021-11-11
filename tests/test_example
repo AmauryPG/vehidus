@@ -1,0 +1,23 @@
+    lastFrame = 1
+    path = bpy.data.objects["Path"]
+    ob = bpy.data.objects["Voiture"]
+    obst1 = bpy.data.objects["Cube"]
+    obst2 = bpy.data.objects["Cube2"]
+    ob.animation_data_clear()
+    lineSensorsArray = [None] * 5
+    for i in range(5):
+        lineSensorsArray[i] = bpy.data.objects["SensorLine" + str(i)]
+        lineSensorsArray[i].animation_data_clear()
+        
+    distSensor = bpy.data.objects["SensorDist"]
+    distSensor.rotation_euler[0] = 0
+    distSensor.rotation_euler[1] = -np.pi/2
+    distSensor.rotation_euler[2] = 0
+    distSensor.animation_data_clear()
+    obstacles = [obst1, obst2]
+    car = ObjectCar(ob,lineSensorsArray,distSensor,path,obstacles)
+    car.positionXYZ = [0,0,0.385]
+    car.facingAngle = 0
+    car.updateOb(lastFrame)
+    for i in range(0,30):
+        lastFrame,sensorsValues,distValue = turnAngleSpeed(np.pi/10,2,lastFrame,car)
