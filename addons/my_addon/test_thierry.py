@@ -8,8 +8,38 @@ import bmesh
 from mathutils.bvhtree import BVHTree
 import math
 
-import numpy as np
-import math
+distance_entre_capteurs = 0.18
+distance_entre_centre_masse_et_capteur = 1.41
+class AI_Thierry :
+    def __init__(self, speed):
+        self.maxSpeed = float(100)
+        # m/s
+        self.speed = float(speed)
+        # rad -pi à pi
+        self.angle = 0
+    def getAngle(self, donnees_ligne) :
+        facteur = 0.70
+        if donnees_ligne == [1,0,0,0,0] :
+            self.angle = np.arctan(2 * facteur* distance_entre_capteurs/distance_entre_centre_masse_et_capteur)
+        elif donnees_ligne == [1,1,0,0,0] :
+            self.angle = np.arctan(1.5 * facteur * distance_entre_capteurs/distance_entre_centre_masse_et_capteur)
+        elif donnees_ligne == [0,1,0,0,0] :
+            self.angle = np.arctan(1 * facteur * distance_entre_capteurs/distance_entre_centre_masse_et_capteur)
+        elif donnees_ligne == [0,1,1,0,0] :
+            self.angle = np.arctan(0.5 * facteur * distance_entre_capteurs/distance_entre_centre_masse_et_capteur)
+        elif donnees_ligne == [0,0,1,0,0] :
+            self.angle = self.angle
+        elif donnees_ligne == [0,0,1,1,0] :
+            self.angle = -np.arctan(0.5 * facteur * distance_entre_capteurs/distance_entre_centre_masse_et_capteur)
+        elif donnees_ligne == [0,0,0,1,0] :
+            self.angle = -np.arctan(1.0 * facteur * distance_entre_capteurs/distance_entre_centre_masse_et_capteur)
+        elif donnees_ligne == [0,0,0,1,1] :
+            self.angle = -np.arctan(1.5 * facteur* distance_entre_capteurs/distance_entre_centre_masse_et_capteur)
+        elif donnees_ligne == [0,0,0,0,1] :
+            self.angle = -np.arctan(2 * facteur * distance_entre_capteurs/distance_entre_centre_masse_et_capteur)
+        else:
+            self.angle = self.angle
+        return self.angle 
 
 class AI:
     def __init__(self, speed):
@@ -95,7 +125,7 @@ class AI:
             self.angle = 0
 
 FPS = 24 # frame/seconds
-AI_UPDATE_RATE = 1 #frame
+AI_UPDATE_RATE = 2 #frame
 TIME_BETWEEN_AI_UPDATE = AI_UPDATE_RATE/FPS # seconds
 DISTANCE_X_CAPTEUR_LIGNE = 1.41
 DISTANCE_Y_CAPTEUR_LIGNE = 0.18
@@ -245,7 +275,65 @@ def distance_check(sensorDist,Obstacles):
                 Distance = 100000
                 print("Can't see shit")
     return Distance
+
+rayon = 0.014
+
+def mouv_bille(voiture_moveX, voiture_moveY, a_voiture_x, a_voiture_y, pos_bille, vitesse_bille):
+    g = 9.81
+    voiture = bpy.data.objects["Voiture"]
+    bille = bpy.data.objects["Bille"]
     
+    pos_initiale_x = 0.071198
+    pos_initiale_y = 0
+    pos_initiale_z = 0.025092
+    
+    x = pos_bille[0]
+    y = pos_bille[1]
+    z = pos_bille[2]
+    print(x, y, z)
+    v_x = vitesse_bille[0]
+    v_y = vitesse_bille[1]
+    a_Nx = 0
+    a_Ny = 0
+    z_x = 0
+    z_y = 0
+    bille_XYZ = [None, None, None]
+    norme = 0
+
+    dt = 1
+    # Ajouter un coef de friction
+    # Ajouter la meme chose en y pour le 3D
+    if x == 0:
+        a_Nx = 0
+    else:
+        a_Nx = g*z_x/(-x)
+        
+    if y == 0:
+        a_Ny = 0
+    else:
+        a_Ny = g*z_y/(-y)
+        
+    a_bille_x = a_Nx - a_voiture_x
+    v_x = v_x + a_bille_x*(dt/FPS)
+    x = x + v_x*(dt/FPS) + 0.5*a_bille_x*(dt/FPS)**2
+    
+    a_bille_y = a_Ny - a_voiture_y
+    v_y = v_y + a_bille_y*(dt/FPS)
+    y = y + v_y*(dt/FPS) + 0.5*a_bille_y*(dt/FPS)**2
+
+    z_x = rayon - np.sqrt(rayon**2-x**2)
+    z_y = rayon - np.sqrt(rayon**2-y**2)
+    z = rayon - np.sqrt(rayon**2-(x**2+y**2))
+    
+    bille_XYZ[0] = voiture_moveX+pos_initiale_x+x
+
+    bille_XYZ[1] = voiture_moveY+pos_initiale_y+y
+
+    bille_XYZ[2] = pos_initiale_z+z
+    
+    print(a_bille_x, a_bille_y, v_x, v_y)
+
+    return bille_XYZ, [v_x, v_y]
     
 if __name__ == "__main__":
     #Settings
@@ -265,18 +353,31 @@ if __name__ == "__main__":
     distSensor.rotation_euler[1] = -np.pi/2
     distSensor.rotation_euler[2] = 0
     distSensor.animation_data_clear()
+
+    
+    bille = bpy.data.objects["Bille"]
     obstacles = []
+    bille.location = [0,0,0]
+    bille.animation_data_clear()
     
     # First Frames
     car = ObjectCar(ob,lineSensorsArray,distSensor,path,obstacles)
     car.positionXYZ = [0,0,0.385]
     car.facingAngle = 0
     car.updateOb(lastFrame)
-    ai = AI(1)
-    for i in range(10):
-        lastFrame, sensorsValues, distValue = turnAngleSpeed(ai.getAngle(), ai.getSpeed(), lastFrame, car)
-
+    ai = AI_Thierry(3)
+    sensorsValues = [0, 0, 1, 0, 0]
+    oldSpeed = 0
+    oldAcceleration = 0
+    oldSpeedBille = [0, 0]
     
     for i in range(400):
-        lastFrame, sensorsValues, distValue = turnAngleSpeed(ai.getAngle()/(20), ai.getSpeed(), lastFrame, car)
-        ai.lineFollower(sensorsValues, 2)
+        newSpeed = 0.1*i
+        acceleration = [(newSpeed - oldSpeed)/(AI_UPDATE_RATE/FPS)*np.cos(car.facingAngle), (newSpeed - oldSpeed)/(AI_UPDATE_RATE/FPS)*np.sin(car.facingAngle)]
+        acceleration_list = [oldAcceleration, acceleration]
+        lastFrame, sensorsValues, distValue = turnAngleSpeed(ai.getAngle(sensorsValues), 1+i*0.01, lastFrame, car)
+        oldSpeed = 0.1*i
+        bille_XYZ, oldSpeedBille = mouv_bille(car.positionXYZ[0], car.positionXYZ[1], acceleration[0], acceleration[1], [bille.location[0], bille.location[1], bille.location[2]], oldSpeedBille)
+        bille.location = bille_XYZ
+        bille.keyframe_insert(data_path="location", frame=lastFrame)
+        oldAcceleration = acceleration[0], acceleration[1]
