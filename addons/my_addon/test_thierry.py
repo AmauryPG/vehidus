@@ -71,8 +71,12 @@ class AI:
             #0.0558 : 3.2
             #0.0175 : 1
             self.angleModifier = np.tan(0.0175/deltaLine)
-            self.angle = self.angle * (1/2) - self.angleModifier
             
+            self.angle = self.angle * 0.5 - self.angleModifier  
+            
+            if currLine <= 2 or currLine >= 4:
+                self.angle = 1.8 * self.angle    
+        
             if deltaLine < 0:
                 self.angle = abs(self.angle)
             else:
@@ -276,6 +280,6 @@ if __name__ == "__main__":
         lastFrame, sensorsValues, distValue = turnAngleSpeed(ai.getAngle(), ai.getSpeed(), lastFrame, car)
 
     
-    for i in range(800):
+    for i in range(1000):
         lastFrame, sensorsValues, distValue = turnAngleSpeed(ai.getAngle(), ai.getSpeed(), lastFrame, car)
         ai.lineFollower(sensorsValues, 2)
