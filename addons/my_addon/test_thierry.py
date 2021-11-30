@@ -11,90 +11,51 @@ import math
 import numpy as np
 import math
 
-class AI:
-    def __init__(self, speed):
-        self.maxSpeed = float(100)
-        # m/s
-        self.speed = float(speed)
-        # rad -pi à pi
-        self.angle = 0
+import time
+from os import system
+#fonction pour clear l'outuput
+cls = lambda: system('cls')
 
-        self.prevCaptLine = 3
-        #le buffer existe dans le cas si le robot ne commence pas totalement au centre de la ligne
-        #pour qu'il puisse prendre connaissance de la ligne au début
-        self.buffer = 4
-        self.angleModifier = 0
+BLACK = 0
+WHITE = 1
 
-    #fonction principal de l'AI
-    def updateAI(self, captLine, captUltra):
-        self.averageLine(captLine)
+CONTINUER = False
+ARRETER = True
 
-    #getter et setter
-    def getSpeed(self):
-        return self.speed
+AVANCER = True
+RECULER = False
 
-    def setSpeed(self, speed):
-        self.speed = speed
+FACTEUR = 35/4
 
-    def getAngle(self):
-        return  self.angle
-
-    def setAngle(self, angle):
-        self.angle = angle
-
-    #Trouve le point moyen de la ligne sur le sol
-    def averageLine(self, captLine):
-        denum = captLine[0] + captLine[1]+ captLine[2]+ captLine[3]+ captLine[4]
-
-        #s'assure qu'il n'y a pas de division par 0
-        if denum == 0:
-            #cas ou il n'y a pas de limite
-            return 3
-
-        return (captLine[0] + 2 * captLine[1]+ 3 * captLine[2]+ 4 * captLine[3]+ 5 * captLine[4])/denum
-
-    #fonction principal pour suivre la ligne
-    def lineFollower(self, captLine, speed): 
-        #va chercher la valeur moyenne de l'array de la ligne actuel
-        currLine = self.averageLine(captLine)
-        #va chercher la valeur moyenne de l'array de la ligne précedente
-        #prevLine = self.averageLine(self.prevCaptLine)
-        #trouve la difference entre la ligne précedente et la ligne suivante.
-        #i.e. la pente de la tangente
-        deltaLine = (currLine - self.prevCaptLine)
-        
-        if deltaLine == 0:
-            self.speed = speed 
-            self.angle = self.angle + self.angleModifier
-            self.angleModifier = self.angleModifier * (1/20)
-        else:                
-            #0.0558 : 3.2
-            #0.0175 : 1
-            self.angleModifier = np.tan(0.0175/deltaLine)
-            
-            self.angle = self.angle * 0.5 - self.angleModifier  
-            
-            if currLine <= 2 or currLine >= 4:
-                self.angle = 1.8 * self.angle    
-        
-            if deltaLine < 0:
-                self.angle = abs(self.angle)
-            else:
-                self.angle = -abs(self.angle)
-                
-            if abs(self.angle) > 0:
-                g = abs(2 / (abs(self.angle) + 1) - 1)
-            else :
-                g = 1
-                
-            if abs(self.angle) >= np.pi:
-                h = -1
-            else:
-                h = 1
-                
-            self.speed = self.speed * g * h
-            print("angle ", self.angle)
-            print("angleMod ", self.angleModifier)
+CONTINUER_TOURNANT = True
+ARRETER_TOURNANT = False
+# Return DONE (True or false), Angle de roue en degre (entre -45 et 45), Sens (avant = True, arriere = False), CONTINUER TOURNANT (TRUE OR FALSE)
+def get_wheel_angles(line_reader, previous_value, continuer_tournant):
+    if line_reader == [WHITE,BLACK,BLACK,BLACK,BLACK]:
+        return CONTINUER, -FACTEUR * 4, AVANCER, True
+    elif line_reader == [WHITE, WHITE, BLACK, BLACK, BLACK]:
+        return CONTINUER, -FACTEUR * 3, AVANCER, False
+    elif line_reader == [BLACK, WHITE, BLACK, BLACK, BLACK]:
+        return CONTINUER, -FACTEUR * 2, AVANCER, False
+    elif line_reader == [BLACK, WHITE, WHITE, BLACK, BLACK]:
+        return CONTINUER, -FACTEUR * 1, AVANCER, False
+    ## CONTINUER TOUT DROIT
+    elif line_reader == [BLACK, BLACK, WHITE, BLACK, BLACK]:
+        return CONTINUER, FACTEUR * 0, AVANCER, False
+    ## TOURNANT A DROITE
+    elif line_reader == [BLACK,BLACK,BLACK,BLACK,WHITE]:
+        return CONTINUER, FACTEUR * 4, AVANCER, True
+    elif line_reader == [BLACK, BLACK, BLACK, WHITE, WHITE]:
+        return CONTINUER, FACTEUR * 3, AVANCER, False
+    elif line_reader == [BLACK, BLACK, BLACK, WHITE, BLACK]:
+        return CONTINUER, FACTEUR * 2, AVANCER, False
+    elif line_reader == [BLACK, BLACK, WHITE, WHITE, BLACK]:
+        return CONTINUER, FACTEUR * 1, AVANCER, False
+    else:
+        if continuer_tournant:
+            return CONTINUER, previous_value, AVANCER, True
+        else:
+            return CONTINUER, previous_value, AVANCER, False
  
 
 FPS = 24 # frame/seconds
@@ -163,12 +124,28 @@ class ObjectCar :
         #self.sensorDist =  distance_check(self.distSensor,self.obstacles)
         
 def turnAngleSpeed(angle, speed, lastFrame, car):
+    angle = - angle
     facingAngle = car.facingAngle
-    turn = [facingAngle, facingAngle + angle]
     frames = [lastFrame,  lastFrame + AI_UPDATE_RATE]
-    distance = (TIME_BETWEEN_AI_UPDATE) * speed
-    positionFinalX = [car.positionXYZ[0], car.positionXYZ[0] + np.cos(facingAngle + angle)*distance]
-    positionFinalY = [car.positionXYZ[1],car.positionXYZ[1] + np.sin(facingAngle + angle)*distance]
+    distance = (TIME_BETWEEN_AI_UPDATE) * speed 
+    
+    newPositionX = car.positionXYZ[0] + np.cos(angle)*distance
+    newPositionY = car.positionXYZ[1] + np.sin(angle)*distance
+    
+    positionFinalX = [car.positionXYZ[0], newPositionX]
+    positionFinalY = [car.positionXYZ[1], newPositionY]
+    
+    if angle == 0:
+        turn = [facingAngle, facingAngle]
+    else:
+        turn = [facingAngle,  facingAngle + np.arctan(newPositionY/newPositionX)] 
+    
+    print("Frame : ", lastFrame)
+    print("position X : ", positionFinalX)
+    print("position Y : ", positionFinalY)
+    print("angle : ", angle)
+    print("facingAngle ", facingAngle) 
+    
     sensors = []
     for i in range(len(frames)):
         frame = frames[i]
@@ -250,7 +227,9 @@ def distance_check(sensorDist,Obstacles):
     return Distance
     
     
-if __name__ == "__main__":
+if __name__ == "__main__": 
+    cls()
+    prevAngle = 0
     #Settings
     lastFrame = 1
     path = bpy.data.objects["Path"]
@@ -274,12 +253,18 @@ if __name__ == "__main__":
     car = ObjectCar(ob,lineSensorsArray,distSensor,path,obstacles)
     car.positionXYZ = [0,0,0.385]
     car.facingAngle = 0
-    car.updateOb(lastFrame)
-    ai = AI(1)
-    for i in range(10):
-        lastFrame, sensorsValues, distValue = turnAngleSpeed(ai.getAngle(), ai.getSpeed(), lastFrame, car)
-
+    car.updateOb(lastFrame) 
     
-    for i in range(1000):
-        lastFrame, sensorsValues, distValue = turnAngleSpeed(ai.getAngle(), ai.getSpeed(), lastFrame, car)
-        ai.lineFollower(sensorsValues, 2)
+    prevValueTournant = 0
+    continuerTournant = False
+    sensorsValues = [0,0,1,0,0]
+    for i in range(10):
+        done, prevValueTournant, sens, continuer_tournant = get_wheel_angles(sensorsValues, prevValueTournant, continuerTournant)
+        lastFrame, sensorsValues, distValue = turnAngleSpeed(np.deg2rad(prevValueTournant), 2, lastFrame, car)
+        #print(i, ' : ' , prevValueTournant)
+    
+    for i in range(450):
+        done, prevValueTournant, sens, continuer_tournant = get_wheel_angles(sensorsValues, prevValueTournant, continuerTournant)
+        lastFrame, sensorsValues, distValue = turnAngleSpeed(np.deg2rad(prevValueTournant), 2, lastFrame, car)
+        #print(i+10, ' : ' , prevValueTournant)
+          
