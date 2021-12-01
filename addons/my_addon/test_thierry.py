@@ -60,7 +60,7 @@ class Bille:
         self.vitesse = [0,0]
         self.acceleration = [0, 0]
         
-    def mouv_bille(self, a_voiture_x, a_voiture_y):
+    def mouv_bille(self, a_voiture_x, a_voiture_y, car):
         g = 9.81
         a_Nx = 0
         a_Ny = 0
@@ -89,7 +89,9 @@ class Bille:
         self.z_bille[1] = RAYON - np.sqrt(RAYON**2-self.XYZ[1]**2)
         z_norm = RAYON - np.sqrt(RAYON**2-(self.XYZ[0]**2+self.XYZ[1]**2))
         
-        
+        self.obj.location = [self.XYZ[0]+car.positionXYZ[0]+DISTANCE_BOL_VEHICULE*np.cos(car.facingAngle),
+                             self.XYZ[1]+car.positionXYZ[1]+DISTANCE_BOL_VEHICULE*np.sin(car.facingAngle),
+                             self.XYZ[2]+POS_INITIALE_Z_BILLE]
         
         
 def a_centripete(v1_x, v1_y, v2_x, v2_y, angle):
@@ -356,7 +358,7 @@ if __name__ == "__main__":
     j = 0
     obstacleAvoidBuffer = 0
     
-    for i in range(3000):
+    for i in range(1000):
             
             #For the first 100 frames, the vehicule accelerate
             if i < 100:
@@ -418,10 +420,7 @@ if __name__ == "__main__":
             else:
                 a_car = acceleration_lin
             
-            bille.mouv_bille(a_car[0], a_car[1])
-            bille.obj.location = [bille.XYZ[0]+car.positionXYZ[0]+DISTANCE_BOL_VEHICULE*np.cos(car.facingAngle),
-                             bille.XYZ[1]+car.positionXYZ[1]+DISTANCE_BOL_VEHICULE*np.sin(car.facingAngle),
-                             bille.XYZ[2]+POS_INITIALE_Z_BILLE]
+            bille.mouv_bille(a_car[0], a_car[1], car)
                               
             if bille.XYZ[2] > 0.015:
                 mat = bpy.data.materials.new("PKHG")
