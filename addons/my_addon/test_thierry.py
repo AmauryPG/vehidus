@@ -20,11 +20,11 @@ cls = lambda: system('cls')
 FPS = 24 # frame/seconds
 AI_UPDATE_RATE = 1 #frame
 TIME_BETWEEN_AI_UPDATE = AI_UPDATE_RATE/FPS # seconds
-DISTANCE_X_CAPTEUR_LIGNE = 1.41
+DISTANCE_X_CAPTEUR_LIGNE = 1.2682
 DISTANCE_Y_CAPTEUR_LIGNE = 0.18
 DISTANCE_X_CAPTEUR_DISTANCE = 1.212
 DISTANCE_Z_CAPTEUR_DISTANCE = 0.225
-FRAME_AVOID = 35
+FRAME_AVOID = 40
 
 BLACK = 1
 WHITE = 0
@@ -262,9 +262,9 @@ def avoidObstacle(distance, speed, nbFrames):
         firstTurn = []
         middleTurn = []
         lastTurn = []
-        middleRadius = 4
-        firstRadius = 4
-        lastRadius = 4
+        middleRadius = 17
+        firstRadius = 17
+        lastRadius = 17
         angle = 0
         
         
@@ -316,37 +316,42 @@ def getTurningAngle(radius):
 
 def distance_check(sensorDist,Obstacles):
     scene =  bpy.context.scene
-    Distance = 0.0
+    distance = 100000
+    distanceCalculee = 0
     #check every object for intersection with every other object
     for Obj in Obstacles:
-            #create bmesh objects
-            bm1 = bmesh.new()
-            bm2 = bmesh.new()
+        #create bmesh objects
+        bm1 = bmesh.new()
+        bm2 = bmesh.new()
 
-            #fill bmesh data from objects
-            bm1.from_mesh(scene.objects[Obj.name].data)
-            bm2.from_mesh(scene.objects[sensorDist.name].data)            
+        #fill bmesh data from objects
+        bm1.from_mesh(scene.objects[Obj.name].data)
+        bm2.from_mesh(scene.objects[sensorDist.name].data)            
 
-            #fixed it here:
-            bm1.transform(scene.objects[Obj.name].matrix_world)
-            bm2.transform(scene.objects[sensorDist.name].matrix_world) 
+        #fixed it here:
+        bm1.transform(scene.objects[Obj.name].matrix_world)
+        bm2.transform(scene.objects[sensorDist.name].matrix_world) 
 
-            #make BVH tree from BMesh of objects
-            obj_now_BVHtree = BVHTree.FromBMesh(bm1)
-            obj_next_BVHtree = BVHTree.FromBMesh(bm2)           
-            #get intersecting pairs
-            inter = obj_now_BVHtree.overlap(obj_next_BVHtree)
-            #if list is empty, no objects are touching
-            if inter != []:
-                xdist = Obj.location[0] - sensorDist.location[0]
-                ydist = Obj.location[1] - sensorDist.location[1]
-                Distance = np.sqrt(xdist**2 + ydist**2)
-                print("Car seeing " + Obj.name + " at " + str(Distance))
-            else:
-                #print(sensor.name + " and " + path.name + " are not intersecting")
-                Distance = 100000
-                print("Can't see shit")
-    return Distance
+        #make BVH tree from BMesh of objects
+        obj_now_BVHtree = BVHTree.FromBMesh(bm1)
+        obj_next_BVHtree = BVHTree.FromBMesh(bm2)           
+        #get intersecting pairs
+        inter = obj_now_BVHtree.overlap(obj_next_BVHtree)
+        #if list is empty, no objects are touching
+        if inter != []:
+            xdist = Obj.location[0] - sensorDist.location[0]
+            ydist = Obj.location[1] - sensorDist.location[1]
+            distanceCalculee = np.sqrt(xdist**2 + ydist**2)
+            print("Car seeing " + Obj.name + " at " + str(distanceCalculee))
+        else:
+            #print(sensor.name + " and " + path.name + " are not intersecting")
+            distanceCalculee = 100000
+            print("Can't see shit")
+        
+        if distanceCalculee < distance:
+            distance = distanceCalculee
+    
+    return distance
     
 if __name__ == "__main__":
     #Settings
@@ -365,7 +370,7 @@ if __name__ == "__main__":
     distSensor.animation_data_clear()
 
     bille = Bille()
-    obstacles = [bpy.data.objects["Obstacle1"]]
+    obstacles = [bpy.data.objects["Obstacle1"], bpy.data.objects["Obstacle2"]]
     
     # First Frames
     car = ObjectCar(ob,lineSensorsArray,distSensor,path,obstacles)
@@ -374,53 +379,52 @@ if __name__ == "__main__":
     continuerTournant = False
     sensorsValues = [0,0,1,0,0]
     isMovingAround = False
-    j = 0
-    obstacleAvoidBuffer = 0
+    j, obstacleAvoidBuffer = 0, 0
+    fiveSec, thirtyCM = False, False
     
-    for i in range(700):
+    for i in range(1200):
                 
             #Get the distance between the sensor and the obstacles
             distance = distance_check(distSensor, obstacles)
             print("car speed : ",car.speed)
-            
             if obstacleAvoidBuffer > 2 * FPS  and sensorsValues == [0,0,1,0,0]:
                 isMovingAround = False
                 j = 0
                 obstacleAvoidBuffer = 0
+                fiveSec = False
+                thirtyCM = False
                 
             avoidDistance = car.updateAvoidDistance()
+            print("dist : ", distance)
             print("avoid dist : ", avoidDistance)
             #Obstacle detection
-            if (avoidDistance - 0.1) < distance < (avoidDistance + 0.1) or isMovingAround is True:
+            if (avoidDistance - 0.05) < distance < (avoidDistance + 0.05) or isMovingAround is True:
                 isMovingAround = True
-                
+                print("if 1------------")
+
                 if j == 0 :
                     backwardAngle = car.facingAngle
-                    
-                if 0.95 < distance < 1.05:
-                    print("distance = 10 cm")
-                    
-                    
-                # A modifier pour inclure la methode car.stop() qui fait planter blender pour le moment
-                # La methode car.stop utilise la décélération
-                elif distance < avoidDistance:
-                    car.speed = 0
-                    time.sleep(5)
                 
-#                elif j > 5*FPS and j < 9*FPS:
-#                    car.speed = -0.3
-                else:
+                if car.speed != 0 and not fiveSec:
+                    car.stop()
+                elif car.speed == 0 and not fiveSec:
+                    # Wait 5s
+                    if j == 5*FPS:
+                        car.speed = -VITESSE_MIN
+                        fiveSec = True
+                    else:
+                        j += 1
+                        
+                elif thirtyCM:
                     car.accelerate()
                     avoidPath = avoidObstacle(distance, car.speed, FRAME_AVOID)               
                     car.facingAngle = backwardAngle + avoidPath[obstacleAvoidBuffer]
                     obstacleAvoidBuffer += 1
-                
-                j += 1
-                
-                if j == (4*FRAME_AVOID+(FPS*5 + (1/0.1))) - 1:
-                    isMovingAround = False
-                    j = 0 
-                    obstacleAvoidBuffer = 0
+
+                        
+                elif 2.95 < distance < 3.05 and fiveSec:
+                    car.speed = 0
+                    thirtyCM = True
                     
             else:
                 car.accelerate()
