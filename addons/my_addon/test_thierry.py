@@ -24,10 +24,10 @@ DISTANCE_X_CAPTEUR_LIGNE = 1.41
 DISTANCE_Y_CAPTEUR_LIGNE = 0.18
 DISTANCE_X_CAPTEUR_DISTANCE = 1.212
 DISTANCE_Z_CAPTEUR_DISTANCE = 0.225
-FRAME_AVOID = 75
+FRAME_AVOID = 35
 
-BLACK = 0
-WHITE = 1 
+BLACK = 1
+WHITE = 0
 
 CONTINUER = False
 ARRETER = True
@@ -37,6 +37,9 @@ RECULER = False
 DISTANCE_ENTRE_CAPTEURS = 0.18
 DISTANCE_ENTRE_CENTRE_MASSE_ET_CAPTEUR = 1.41
 FACTEUR = ((DISTANCE_ENTRE_CAPTEURS/DISTANCE_ENTRE_CENTRE_MASSE_ET_CAPTEUR)/2)*0.6
+VITESSE_MAX = 2.5
+VITESSE_MIN = 0.75
+ACCELERATION_MAX = 1
 
 CONTINUER_TOURNANT = True
 ARRETER_TOURNANT = False
@@ -60,7 +63,7 @@ class Bille:
         self.vitesse = [0,0]
         self.acceleration = [0, 0]
         
-    def mouv_bille(self, a_voiture_x, a_voiture_y, car):
+    def mouv_bille(self, a_voiture_x, a_voiture_y):
         g = 9.81
         a_Nx = 0
         a_Ny = 0
@@ -89,10 +92,6 @@ class Bille:
         self.z_bille[1] = RAYON - np.sqrt(RAYON**2-self.XYZ[1]**2)
         z_norm = RAYON - np.sqrt(RAYON**2-(self.XYZ[0]**2+self.XYZ[1]**2))
         
-        self.obj.location = [self.XYZ[0]+car.positionXYZ[0]+DISTANCE_BOL_VEHICULE*np.cos(car.facingAngle),
-                             self.XYZ[1]+car.positionXYZ[1]+DISTANCE_BOL_VEHICULE*np.sin(car.facingAngle),
-                             self.XYZ[2]+POS_INITIALE_Z_BILLE]
-        
         
 def a_centripete(v1_x, v1_y, v2_x, v2_y, angle):
     v2 = np.sqrt(v2_x**2+v2_y**2)
@@ -102,25 +101,25 @@ def a_centripete(v1_x, v1_y, v2_x, v2_y, angle):
 
 # Return DONE (True or false), Angle de roue en degre (entre -45 et 45), Sens (avant = True, arriere = False), CONTINUER TOURNANT (TRUE OR FALSE)
 def get_wheel_angles(line_reader, previous_value, continuer_tournant):
-    if line_reader == [WHITE,BLACK,BLACK,BLACK,BLACK]:
+    if line_reader == [BLACK,WHITE,WHITE,WHITE,WHITE]:
         return CONTINUER, np.arctan(FACTEUR * 4), AVANCER, True
-    elif line_reader == [WHITE, WHITE, BLACK, BLACK, BLACK]:
+    elif line_reader == [BLACK, BLACK, WHITE, WHITE, WHITE]:
         return CONTINUER, np.arctan(FACTEUR * 3), AVANCER, False
-    elif line_reader == [BLACK, WHITE, BLACK, BLACK, BLACK]:
+    elif line_reader == [WHITE, BLACK, WHITE, WHITE, WHITE]:
         return CONTINUER, np.arctan(FACTEUR * 2), AVANCER, False
-    elif line_reader == [BLACK, WHITE, WHITE, BLACK, BLACK]:
+    elif line_reader == [WHITE, BLACK, BLACK, WHITE, WHITE]:
         return CONTINUER, np.arctan(FACTEUR * 1), AVANCER, False
     ## CONTINUER TOUT DROIT
-    elif line_reader == [BLACK, BLACK, WHITE, BLACK, BLACK]:
+    elif line_reader == [WHITE, WHITE, BLACK, WHITE, WHITE]:
         return CONTINUER, np.arctan(FACTEUR * 0), AVANCER, False
     ## TOURNANT A DROITE
-    elif line_reader == [BLACK,BLACK,BLACK,BLACK,WHITE]:
+    elif line_reader == [WHITE,WHITE,WHITE,WHITE,BLACK]:
         return CONTINUER, np.arctan(-FACTEUR * 4), AVANCER, True
-    elif line_reader == [BLACK, BLACK, BLACK, WHITE, WHITE]:
+    elif line_reader == [WHITE, WHITE, WHITE, BLACK, BLACK]:
         return CONTINUER, np.arctan(-FACTEUR * 3), AVANCER, False
-    elif line_reader == [BLACK, BLACK, BLACK, WHITE, BLACK]:
+    elif line_reader == [WHITE, WHITE, WHITE, BLACK, WHITE]:
         return CONTINUER, np.arctan(-FACTEUR * 2), AVANCER, False
-    elif line_reader == [BLACK, BLACK, WHITE, WHITE, BLACK]:
+    elif line_reader == [WHITE, WHITE, BLACK, BLACK, WHITE]:
         return CONTINUER, np.arctan(-FACTEUR * 1), AVANCER, False
     else:
         if continuer_tournant:
@@ -143,6 +142,26 @@ class ObjectCar :
         self.sensorDist = 0
         self.oldSpeed = 0
         self.oldFacingAngle = 0
+        self.avoidDistance = 3.125
+        
+    def accelerate(self):
+        if self.speed < VITESSE_MAX:
+            self.speed += ACCELERATION_MAX*1/FPS
+            
+    def decelerate(self, vitesseMin=VITESSE_MIN):
+        if self.speed > vitesseMin:
+            self.speed -= ACCELERATION_MAX*1/FPS
+            
+        if self.speed - ACCELERATION_MAX*1/FPS < 0:
+            self.speed = 0
+            
+    def stop(self):
+        self.decelerate(0)
+        
+    def updateAvoidDistance(self, acceleration=-ACCELERATION_MAX):
+        t = -self.speed/acceleration
+        self.avoidDistance = 0.5*acceleration*t**2 + self.speed*t + 1
+        return self.avoidDistance
         
     def updateOb(self, frame):
         self.ob.location = [self.positionXYZ[0], self.positionXYZ[1], self.positionXYZ[2]]
@@ -243,9 +262,9 @@ def avoidObstacle(distance, speed, nbFrames):
         firstTurn = []
         middleTurn = []
         lastTurn = []
-        middleRadius = 17.00
-        firstRadius = 17.00
-        lastRadius = 17.00
+        middleRadius = 4
+        firstRadius = 4
+        lastRadius = 4
         angle = 0
         
         
@@ -358,33 +377,40 @@ if __name__ == "__main__":
     j = 0
     obstacleAvoidBuffer = 0
     
-    for i in range(1000):
-            
-            #For the first 100 frames, the vehicule accelerate
-            if i < 100:
-                car.speed = 0.01*i
+    for i in range(700):
                 
             #Get the distance between the sensor and the obstacles
             distance = distance_check(distSensor, obstacles)
+            print("car speed : ",car.speed)
             
             if obstacleAvoidBuffer > 2 * FPS  and sensorsValues == [0,0,1,0,0]:
                 isMovingAround = False
                 j = 0
                 obstacleAvoidBuffer = 0
                 
-            #Obstacle detetion
-            if 0.95 < distance < 1.05 or isMovingAround is True:
+            avoidDistance = car.updateAvoidDistance()
+            print("avoid dist : ", avoidDistance)
+            #Obstacle detection
+            if (avoidDistance - 0.1) < distance < (avoidDistance + 0.1) or isMovingAround is True:
                 isMovingAround = True
+                
                 if j == 0 :
                     backwardAngle = car.facingAngle
-                
-                if j < 5*FPS:
-                    car.speed = 0
                     
-                elif j > 5*FPS and j < 9*FPS:
-                    car.speed = -0.5
+                if 0.95 < distance < 1.05:
+                    print("distance = 10 cm")
+                    
+                    
+                # A modifier pour inclure la methode car.stop() qui fait planter blender pour le moment
+                # La methode car.stop utilise la décélération
+                elif distance < avoidDistance:
+                    car.speed = 0
+                    time.sleep(5)
+                
+#                elif j > 5*FPS and j < 9*FPS:
+#                    car.speed = -0.3
                 else:
-                    car.speed = 1
+                    car.accelerate()
                     avoidPath = avoidObstacle(distance, car.speed, FRAME_AVOID)               
                     car.facingAngle = backwardAngle + avoidPath[obstacleAvoidBuffer]
                     obstacleAvoidBuffer += 1
@@ -397,10 +423,7 @@ if __name__ == "__main__":
                     obstacleAvoidBuffer = 0
                     
             else:
-                if i < 100:
-                    car.speed = 0.01*i
-                else:
-                    car.speed = 1
+                car.accelerate()
             
             done, prevValueTournant, sens, continuer_tournant = get_wheel_angles(sensorsValues, prevValueTournant, continuerTournant)
             acceleration_lin = [(car.speed - car.oldSpeed)/(AI_UPDATE_RATE/FPS)*np.cos(car.facingAngle), (car.speed - car.oldSpeed)/(AI_UPDATE_RATE/FPS)*np.sin(car.facingAngle)]
@@ -420,7 +443,11 @@ if __name__ == "__main__":
             else:
                 a_car = acceleration_lin
             
-            bille.mouv_bille(a_car[0], a_car[1], car)
+            # La bille fonctionne en m/s2 et le vehicule en dm/s2
+            bille.mouv_bille(a_car[0]/10, a_car[1]/10)
+            bille.obj.location = [bille.XYZ[0]+car.positionXYZ[0]+DISTANCE_BOL_VEHICULE*np.cos(car.facingAngle),
+                             bille.XYZ[1]+car.positionXYZ[1]+DISTANCE_BOL_VEHICULE*np.sin(car.facingAngle),
+                             bille.XYZ[2]+POS_INITIALE_Z_BILLE]
                               
             if bille.XYZ[2] > 0.015:
                 mat = bpy.data.materials.new("PKHG")
@@ -432,4 +459,4 @@ if __name__ == "__main__":
             car.oldSpeed = car.speed
             
                                               
-            bille.obj.keyframe_insert(data_path="location", frame=lastFrame)          
+            bille.obj.keyframe_insert(data_path="location", frame=lastFrame)
