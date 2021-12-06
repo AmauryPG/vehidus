@@ -20,9 +20,9 @@ ARRETER_TOURNANT = False
 def get_wheel_angles(line_reader, previous_value, continuer_tournant, previous_sens):
   # CAS DE FIN
   if line_reader == [BLACK,BLACK,BLACK,BLACK,BLACK]:
-    return ARRETER, -FACTEUR * 4, AVANCER, False
+    return ARRETER, -FACTEUR * 0, AVANCER, False
   elif line_reader == [BLACK,WHITE,WHITE,WHITE,WHITE]:
-    return CONTINUER, -FACTEUR * 4, AVANCER, True
+    return CONTINUER, -FACTEUR * 10, AVANCER, True
   elif line_reader == [BLACK, BLACK, WHITE, WHITE, WHITE]:
     return CONTINUER, -FACTEUR * 3, AVANCER, False
   elif line_reader == [WHITE, BLACK, WHITE, WHITE, WHITE]:
@@ -43,7 +43,7 @@ def get_wheel_angles(line_reader, previous_value, continuer_tournant, previous_s
     return CONTINUER, FACTEUR * 1, AVANCER, False
   else:
     if continuer_tournant:
-      return CONTINUER, previous_value, RECULER, True
+      return CONTINUER, previous_value, AVANCER, True
     else:
       return CONTINUER, previous_value, previous_sens, False
 

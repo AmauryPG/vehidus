@@ -1,3 +1,6 @@
+'''
+Ficher principal pour l'excution du AI dans le monde reel.
+'''
 from SunFounder_Line_Follower import Line_Follower
 import independantWheels
 from picar import ADC

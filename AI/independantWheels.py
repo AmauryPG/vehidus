@@ -76,16 +76,13 @@ class Front_Wheels(object):
             bw.left_wheel.forward()
           bw.right_wheel.speed = int(speed*ratio)
           bw.left_wheel.speed = int(speed)
-
         if ratio >  1.0:
-            bw.right_wheel.speed = int(speed)
-            bw.left_wheel.speed = int(speed*(1/ratio))
             if backward:
               bw.right_wheel.backward()
             else: 
               bw.right_wheel.forward()
-
-
+            bw.right_wheel.speed = int(speed)
+            bw.left_wheel.speed = int(speed*(1/ratio))
     @property
     def channel(self):
         return self._channel
@@ -386,8 +383,8 @@ def getTurningRadiusRatio(angle):
         TurningRadius = wheelToWheelLength / np.tan(np.deg2rad(90-angle))
         radiusWheelLeft = TurningRadius - wheelToWheelWidth/2
         radiusWheelRigth = TurningRadius + wheelToWheelWidth/2
-        speedRatio =  radiusWheelLeft/radiusWheelRigth
-        if speedRatio < 0.5 or speedRatio > 1.5 :
+        speedRatio =  (radiusWheelLeft/radiusWheelRigth) 
+        if angle < 50 or angle > 130 :
           backward = True
         return speedRatio, backward
 

@@ -7,15 +7,22 @@ import picar
 import ai_v3
 import numpy as np
 
-REFERENCES = [105, 105  , 105, 105, 105]
+REFERENCES = [100, 100  , 100, 100, 100]
 
 VITESSE_MAX = 60
-VITESSE_MIN = 10
+VITESSE_MIN = 30
 ACCELERATION_MAX = 2
 LOOP_UPDATE_TIME = 1/24
 
+def acceleration_graduelle(bw, speed, accelerationVoulue):
+  if speed < 60:
+    speed = speed + accelerationVoulue
+    bw.speed = speed
+    time.sleep(LOOP_UPDATE_TIME*2)
+  return speed
+
 def acceleration(bw, speed, accelerationVoulue):
-  if speed < VITESSE_MAX:
+  while speed < 60:
     speed = speed + accelerationVoulue
     bw.speed = speed
     time.sleep(LOOP_UPDATE_TIME)
@@ -27,6 +34,7 @@ def decceleration_fct(bw, speed, accelerationVoulue):
     bw.speed = speed
     time.sleep(LOOP_UPDATE_TIME)
   return speed
+
 
 if __name__ == "__main__":
   picar.setup()
@@ -45,9 +53,9 @@ if __name__ == "__main__":
   currentlyAvoidObject = False
   while not done : 
     distanceObjet = ua.get_distance(mount = 5)
-    print(distanceObjet)
+    print("Distance  + " + str(distanceObjet))
     if distanceObjet > 20 : 
-      currentSpeed = acceleration(bw, currentSpeed, ACCELERATION_MAX)
+      currentSpeed = acceleration_graduelle(bw, currentSpeed, ACCELERATION_MAX)
       lf_status_now = lf.read_digital()
       done, angle, sens, continuer_tournant = ai_v3.get_wheel_angles(lf_status_now, angle, continuer_tournant, sens)
       fw.turn(90 + angle,currentSpeed,bw)
@@ -64,14 +72,25 @@ if __name__ == "__main__":
           bw.backward()
           time.sleep(5)
           while distanceObjet < 30:
-            distanceObjet = ua.get_distance(mount = 5)
+            distanceObjet = ua.get_distance(mount = 10)
             currentSpeed = acceleration(bw, currentSpeed, ACCELERATION_MAX)
+
+          bw.forward()
           currentSpeed = 0
           bw.speed = currentSpeed
-          bw.forward()
-          contournementDone = False
-          while not countournementDone:
-            
+          time.sleep(2)
+          fw.turn(90 + 25, currentSpeed, bw)
+          currentSpeed = acceleration(bw, currentSpeed, ACCELERATION_MAX)
+          time.sleep(2)
+          fw.turn(90 - 10, currentSpeed, bw)
+          lf_status_now = lf.read_digital()
+          time.sleep(1)
+          fw.turn(90 - 39, currentSpeed, bw)
+          while(lf_status_now[0] != 1):
+            lf_status_now = lf.read_digital()
+            print(lf.read_digital())
+            pass
+          print(lf.read_digital())
           currentlyAvoidObject = False
   bw.speed = 0
   fw.turn = 90
