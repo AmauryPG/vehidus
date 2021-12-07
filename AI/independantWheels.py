@@ -62,8 +62,6 @@ class Front_Wheels(object):
 
     def turn(self, angle,speed, bw):
         ''' Turn the front wheels to the giving angle '''
-        turning_offset_right = 33
-        turning_offset_left = 0
         self._debug_("Turn to %s " % angle)
         if angle < self._angle["left"]:
             angle = self._angle["left"]
@@ -72,25 +70,19 @@ class Front_Wheels(object):
         self.wheel.write(angle)
         ratio, backward = getTurningRadiusRatio(angle)
         if ratio < 1.0:
-            self._turning_offset = turning_offset_left
-            if backward:
-                bw.left_wheel.backward()
-            else: 
-                bw.left_wheel.forward()
-            bw.right_wheel.speed = int(speed*ratio)
-            bw.left_wheel.speed = int(speed)  
-        elif ratio >  1.0:
-            self._turning_offset = turning_offset_right
+          if backward:
+            bw.left_wheel.backward()
+          else: 
+            bw.left_wheel.forward()
+          bw.right_wheel.speed = int(speed*ratio)
+          bw.left_wheel.speed = int(speed)
+        if ratio >  1.0:
             if backward:
               bw.right_wheel.backward()
             else: 
               bw.right_wheel.forward()
             bw.right_wheel.speed = int(speed)
             bw.left_wheel.speed = int(speed*(1/ratio))
-        else:
-            self._turning_offset = turning_offset_left
-            bw.right_wheel.speed = int(speed)
-            bw.left_wheel.speed = int(speed)
     @property
     def channel(self):
         return self._channel
@@ -392,7 +384,7 @@ def getTurningRadiusRatio(angle):
         radiusWheelLeft = TurningRadius - wheelToWheelWidth/2
         radiusWheelRigth = TurningRadius + wheelToWheelWidth/2
         speedRatio =  (radiusWheelLeft/radiusWheelRigth) 
-        if angle < 50 or angle > 130:
+        if angle < 50 or angle > 130 :
           backward = True
         return speedRatio, backward
 
