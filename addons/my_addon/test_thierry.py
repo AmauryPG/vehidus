@@ -266,9 +266,9 @@ def avoidObstacle(distance, nbFrames):
         firstTurn = []
         middleTurn = []
         lastTurn = []
-        middleRadius = 17
-        firstRadius = 17
-        lastRadius = 17
+        middleRadius = 20
+        firstRadius = 20
+        lastRadius = 20
         angle = 0
         
         
@@ -278,7 +278,7 @@ def avoidObstacle(distance, nbFrames):
         arcLength = circ/arcAngle
         turningAngle = getTurningAngle(firstRadius)
         for f in range(nbFrames):
-            angle += turningAngle/nbFrames
+            angle -= turningAngle/nbFrames
             firstTurn.append(angle)
             
 # second turn
@@ -287,7 +287,7 @@ def avoidObstacle(distance, nbFrames):
         arcLength = circ/arcAngle
         turningAngle = getTurningAngle(middleRadius)
         for f in range(2*nbFrames):
-            angle -= turningAngle/nbFrames
+            angle += turningAngle/nbFrames
             middleTurn.append(angle)
 
 # last turn
@@ -296,7 +296,7 @@ def avoidObstacle(distance, nbFrames):
         arcLength = circ/arcAngle
         turningAngle = getTurningAngle(lastRadius)
         for f in range(nbFrames):
-            angle += turningAngle/nbFrames
+            angle -= turningAngle/nbFrames
             lastTurn.append(angle)
             
         return firstTurn + middleTurn + lastTurn
@@ -375,7 +375,9 @@ if __name__ == "__main__":
     distSensor.animation_data_clear()
 
     bille = Bille()
-    obstacles = [bpy.data.objects["Obstacle1"], bpy.data.objects["Obstacle2"]]
+    obstacles = [bpy.data.objects["Obstacle1"], bpy.data.objects["Obstacle2"],
+                 bpy.data.objects["Obstacle3"], bpy.data.objects["Obstacle4"],
+                 bpy.data.objects["Obstacle5"]]
     
     # First Frames
     car = ObjectCar(ob,lineSensorsArray,distSensor,path,obstacles)
@@ -387,7 +389,10 @@ if __name__ == "__main__":
     j, obstacleAvoidBuffer = 0, 0
     fiveSec, thirtyCM = False, False
     
-    for i in range(1700):
+    for i in range(5000):
+                
+            if sensorsValues ==  [1, 1, 1, 1, 1]:
+                break
                 
             #Get the distance between the sensor and the obstacles
             distance = distanceCheck(distSensor, obstacles)
