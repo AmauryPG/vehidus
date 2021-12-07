@@ -28,25 +28,25 @@ FRAME_AVOID = 40
 BLACK = 1
 WHITE = 0
 
-CONTINUER = False
+CONTINUE = False
 ARRETER = True
 
-AVANCER = True
+FORWARD = True
 RECULER = False
 DISTANCE_ENTRE_CAPTEURS = 0.18
 DISTANCE_ENTRE_CENTRE_MASSE_ET_CAPTEUR = 1.41
-FACTEUR = ((DISTANCE_ENTRE_CAPTEURS/DISTANCE_ENTRE_CENTRE_MASSE_ET_CAPTEUR)/2)*0.6
-VITESSE_MAX = 2.5
-VITESSE_MIN = 0.75
+FACTOR = ((DISTANCE_ENTRE_CAPTEURS/DISTANCE_ENTRE_CENTRE_MASSE_ET_CAPTEUR)/2)*0.6
+speed_MAX = 2.5
+speed_MIN = 0.75
 ACCELERATION_MAX = 1
 
-CONTINUER_TOURNANT = True
+CONTINUETournant = True
 ARRETER_TOURNANT = False
 
 RAYON = 1.4
 DISTANCE_BOL_VEHICULE =  0.57316
 
-POS_INITIALE_Z_BILLE = 0.66331
+POS_INITIALE_zBille = 0.66331
 
 class Bille:
     def __init__(self):
@@ -55,81 +55,81 @@ class Bille:
         self.positionXYZ = [0,0,0.385]
         self.facingAngle = 0
         self.XYZ = [0, 0, 0]
-        self.z_bille = [0, 0]
+        self.zBille = [0, 0]
         self.mat = bpy.data.materials.new("PKHG")
         self.mat.diffuse_color=(0,1,0,1)
         self.obj.active_material=self.mat
-        self.vitesse = [0,0]
+        self.speed = [0,0]
         self.acceleration = [0, 0]
         
-    def mouv_bille(self, a_voiture_x, a_voiture_y):
+    def mouvBille(self, aCarX, aCarY):
         g = 9.81
-        a_Nx = 0
-        a_Ny = 0
+        aNx = 0
+        aNy = 0
 
         dt = 1
         # Ajouter un coef de friction
         if self.XYZ[0] == 0:
-            a_Nx = 0
+            aNx = 0
         else:
-            a_Nx = g*self.z_bille[0]/(-self.XYZ[0])
+            aNx = g*self.zBille[0]/(-self.XYZ[0])
             
         if self.XYZ[1] == 0:
-            a_Ny = 0
+            aNy = 0
         else:
-            a_Ny = g*self.z_bille[1]/(-self.XYZ[1])
+            aNy = g*self.zBille[1]/(-self.XYZ[1])
             
-        self.acceleration[0] = a_Nx - a_voiture_x
-        self.vitesse[0] = self.vitesse[0] + self.acceleration[0]*(dt/FPS)
-        self.XYZ[0] = self.XYZ[0] + self.vitesse[0]*(dt/FPS) + 0.5*self.acceleration[0]*(dt/FPS)**2
+        self.acceleration[0] = aNx - aCarX
+        self.speed[0] = self.speed[0] + self.acceleration[0]*(dt/FPS)
+        self.XYZ[0] = self.XYZ[0] + self.speed[0]*(dt/FPS) + 0.5*self.acceleration[0]*(dt/FPS)**2
         
-        self.acceleration[1] = a_Ny - a_voiture_y
-        self.vitesse[1] = self.vitesse[1] + self.acceleration[1]*(dt/FPS)
-        self.XYZ[1] = self.XYZ[1] + self.vitesse[1]*(dt/FPS) + 0.5*self.acceleration[1]*(dt/FPS)**2
+        self.acceleration[1] = aNy - aCarY
+        self.speed[1] = self.speed[1] + self.acceleration[1]*(dt/FPS)
+        self.XYZ[1] = self.XYZ[1] + self.speed[1]*(dt/FPS) + 0.5*self.acceleration[1]*(dt/FPS)**2
 
-        self.z_bille[0] = RAYON - np.sqrt(RAYON**2-self.XYZ[0]**2)
-        self.z_bille[1] = RAYON - np.sqrt(RAYON**2-self.XYZ[1]**2)
+        self.zBille[0] = RAYON - np.sqrt(RAYON**2-self.XYZ[0]**2)
+        self.zBille[1] = RAYON - np.sqrt(RAYON**2-self.XYZ[1]**2)
         z_norm = RAYON - np.sqrt(RAYON**2-(self.XYZ[0]**2+self.XYZ[1]**2))
         
         
-def a_centripete(v1_x, v1_y, v2_x, v2_y, angle):
-    v2 = math.sqrt(v2_x**2+v2_y**2)
+def aCentripete(v1x, v1y, v2x, v2y, angle):
+    v2 = math.sqrt(v2x**2+v2y**2)
     if v2 == 0.0:
         return [0, 0]
     else:
-        r = v2**2*AI_UPDATE_RATE/FPS / (np.sqrt((v2_x-v1_x)**2+(v2_y-v1_y)**2))
+        r = v2**2*AI_UPDATE_RATE/FPS / (np.sqrt((v2x-v1x)**2+(v2y-v1y)**2))
         a = v2**2/r
         return [a*np.cos(angle), a*np.sin(angle)]
 
-# Return DONE (True or false), Angle de roue en degre (entre -45 et 45), Sens (avant = True, arriere = False), CONTINUER TOURNANT (TRUE OR FALSE)
-def get_wheel_angles(line_reader, previous_value, continuer_tournant):
-    if line_reader == [BLACK,WHITE,WHITE,WHITE,WHITE]:
-        return CONTINUER, np.arctan(FACTEUR * 4), AVANCER, True
-    elif line_reader == [BLACK, BLACK, WHITE, WHITE, WHITE]:
-        return CONTINUER, np.arctan(FACTEUR * 3), AVANCER, False
-    elif line_reader == [WHITE, BLACK, WHITE, WHITE, WHITE]:
-        return CONTINUER, np.arctan(FACTEUR * 2), AVANCER, False
-    elif line_reader == [WHITE, BLACK, BLACK, WHITE, WHITE]:
-        return CONTINUER, np.arctan(FACTEUR * 1), AVANCER, False
-    ## CONTINUER TOUT DROIT
-    elif line_reader == [WHITE, WHITE, BLACK, WHITE, WHITE]:
-        return CONTINUER, np.arctan(FACTEUR * 0), AVANCER, False
-    ## TOURNANT A DROITE
-    elif line_reader == [WHITE,WHITE,WHITE,WHITE,BLACK]:
-        return CONTINUER, np.arctan(-FACTEUR * 4), AVANCER, True
-    elif line_reader == [WHITE, WHITE, WHITE, BLACK, BLACK]:
-        return CONTINUER, np.arctan(-FACTEUR * 3), AVANCER, False
-    elif line_reader == [WHITE, WHITE, WHITE, BLACK, WHITE]:
-        return CONTINUER, np.arctan(-FACTEUR * 2), AVANCER, False
-    elif line_reader == [WHITE, WHITE, BLACK, BLACK, WHITE]:
-        return CONTINUER, np.arctan(-FACTEUR * 1), AVANCER, False
-    elif line_reader == [BLACK, BLACK, BLACK, BLACK, BLACK]:
-        return ARRETER, np.arctan(FACTEUR * 0), AVANCER, False
+# Return DONE (True or false), Angle de roue en degre (entre -45 et 45), Sens (avant = True, arriere = False), CONTINUE TOURNANT (TRUE OR FALSE)
+def getWheelAngles(lineReader, previousValue, ContinueTournant):
+    if lineReader == [BLACK,WHITE,WHITE,WHITE,WHITE]:
+        return CONTINUE, np.arctan(FACTOR * 4), FORWARD, True
+    elif lineReader == [BLACK, BLACK, WHITE, WHITE, WHITE]:
+        return CONTINUE, np.arctan(FACTOR * 3), FORWARD, False
+    elif lineReader == [WHITE, BLACK, WHITE, WHITE, WHITE]:
+        return CONTINUE, np.arctan(FACTOR * 2), FORWARD, False
+    elif lineReader == [WHITE, BLACK, BLACK, WHITE, WHITE]:
+        return CONTINUE, np.arctan(FACTOR * 1), FORWARD, False
+    ## CONTINUING FORWARD
+    elif lineReader == [WHITE, WHITE, BLACK, WHITE, WHITE]:
+        return CONTINUE, np.arctan(FACTOR * 0), FORWARD, False
+    ## TURNING RIGHT
+    elif lineReader == [WHITE,WHITE,WHITE,WHITE,BLACK]:
+        return CONTINUE, np.arctan(-FACTOR * 4), FORWARD, True
+    elif lineReader == [WHITE, WHITE, WHITE, BLACK, BLACK]:
+        return CONTINUE, np.arctan(-FACTOR * 3), FORWARD, False
+    elif lineReader == [WHITE, WHITE, WHITE, BLACK, WHITE]:
+        return CONTINUE, np.arctan(-FACTOR * 2), FORWARD, False
+    elif lineReader == [WHITE, WHITE, BLACK, BLACK, WHITE]:
+        return CONTINUE, np.arctan(-FACTOR * 1), FORWARD, False
+    elif lineReader == [BLACK, BLACK, BLACK, BLACK, BLACK]:
+        return ARRETER, np.arctan(FACTOR * 0), FORWARD, False
     else:
-        if continuer_tournant:
-            return CONTINUER, previous_value, AVANCER, True
+        if ContinueTournant:
+            return CONTINUE, previousValue, FORWARD, True
         else:
-            return CONTINUER, previous_value, AVANCER, False
+            return CONTINUE, previousValue, FORWARD, False
 
 class ObjectCar :
 
@@ -148,12 +148,12 @@ class ObjectCar :
         self.oldFacingAngle = 0
         self.avoidDistance = 3.125
         
-    def accelerate(self, vitesseMax=VITESSE_MAX):
-        if self.speed < vitesseMax:
+    def accelerate(self, speedMax=speed_MAX):
+        if self.speed < speedMax:
             self.speed += ACCELERATION_MAX*1/FPS
             
-    def decelerate(self, vitesseMin=VITESSE_MIN):
-        if self.speed > vitesseMin:
+    def decelerate(self, speedMin=speed_MIN):
+        if self.speed > speedMin:
             self.speed -= ACCELERATION_MAX*1/FPS
             
         if self.speed - ACCELERATION_MAX*1/FPS < 0:
@@ -206,8 +206,8 @@ class ObjectCar :
         self.distSensor.keyframe_insert(data_path="rotation_euler", frame=frame)
         
         
-        self.sensorsValues = intersection_check(self.lineSensorsArray,self.path)
-        #self.sensorDist =  distance_check(self.distSensor,self.obstacles)
+        self.sensorsValues = intersectionCheck(self.lineSensorsArray,self.path)
+        #self.sensorDist =  distanceCheck(self.distSensor,self.obstacles)
         
 def turnAngleSpeed(angle, speed, lastFrame, car):
     facingAngle = car.facingAngle
@@ -228,7 +228,7 @@ def turnAngleSpeed(angle, speed, lastFrame, car):
         car.ob.keyframe_insert(data_path="rotation_euler", frame=frame)
     return lastFrame + AI_UPDATE_RATE, sensorsValues, distValue
 
-def intersection_check(sensorList,path):
+def intersectionCheck(sensorList,path):
     scene =  bpy.context.scene
     result = []
     #check every object for intersection with every other object
@@ -246,11 +246,11 @@ def intersection_check(sensorList,path):
             bm2.transform(scene.objects[path.name].matrix_world) 
 
             #make BVH tree from BMesh of objects
-            obj_now_BVHtree = BVHTree.FromBMesh(bm1)
-            obj_next_BVHtree = BVHTree.FromBMesh(bm2)           
+            objNowBVHtree = BVHTree.FromBMesh(bm1)
+            objNextBVHtree = BVHTree.FromBMesh(bm2)           
 
             #get intersecting pairs
-            inter = obj_now_BVHtree.overlap(obj_next_BVHtree)
+            inter = objNowBVHtree.overlap(objNextBVHtree)
 
             #if list is empty, no objects are touching
             if inter != []:
@@ -262,7 +262,7 @@ def intersection_check(sensorList,path):
     print(result)
     return result
 
-def avoidObstacle(distance, speed, nbFrames):
+def avoidObstacle(distance, nbFrames):
         firstTurn = []
         middleTurn = []
         lastTurn = []
@@ -318,7 +318,7 @@ def getTurningAngle(radius):
     angle = np.arctan(wheelToWheelLength/ radius)
     return angle
 
-def distance_check(sensorDist,Obstacles):
+def distanceCheck(sensorDist,Obstacles):
     scene =  bpy.context.scene
     distance = 100000
     distanceCalculee = 0
@@ -337,10 +337,10 @@ def distance_check(sensorDist,Obstacles):
         bm2.transform(scene.objects[sensorDist.name].matrix_world) 
 
         #make BVH tree from BMesh of objects
-        obj_now_BVHtree = BVHTree.FromBMesh(bm1)
-        obj_next_BVHtree = BVHTree.FromBMesh(bm2)           
+        objNowBVHtree = BVHTree.FromBMesh(bm1)
+        objNextBVHtree = BVHTree.FromBMesh(bm2)           
         #get intersecting pairs
-        inter = obj_now_BVHtree.overlap(obj_next_BVHtree)
+        inter = objNowBVHtree.overlap(objNextBVHtree)
         #if list is empty, no objects are touching
         if inter != []:
             xdist = Obj.location[0] - sensorDist.location[0]
@@ -350,7 +350,7 @@ def distance_check(sensorDist,Obstacles):
         else:
             #print(sensor.name + " and " + path.name + " are not intersecting")
             distanceCalculee = 100000
-            print("Can't see shit")
+            print("Can't see obstacle")
         
         if distanceCalculee < distance:
             distance = distanceCalculee
@@ -362,7 +362,7 @@ if __name__ == "__main__":
     done = False
     lastFrame = 1
     path = bpy.data.objects["Path"]
-    ob = bpy.data.objects["Voiture"]
+    ob = bpy.data.objects["Car"]
     ob.rotation_mode = 'ZXY'
     ob.animation_data_clear()
     lineSensorsArray = [None] * 5
@@ -381,7 +381,7 @@ if __name__ == "__main__":
     car = ObjectCar(ob,lineSensorsArray,distSensor,path,obstacles)
     car.updateOb(lastFrame)
     prevValueTournant = 0
-    continuerTournant = False
+    CONTINUETournant = False
     sensorsValues = [0,0,1,0,0]
     isMovingAround = False
     j, obstacleAvoidBuffer = 0, 0
@@ -390,8 +390,7 @@ if __name__ == "__main__":
     for i in range(1700):
                 
             #Get the distance between the sensor and the obstacles
-            distance = distance_check(distSensor, obstacles)
-            print("car speed : ",car.speed)
+            distance = distanceCheck(distSensor, obstacles)
             if obstacleAvoidBuffer > 2 * FPS  and sensorsValues == [0,0,1,0,0]:
                 isMovingAround = False
                 j = 0
@@ -412,14 +411,14 @@ if __name__ == "__main__":
                 elif car.speed == 0 and not fiveSec:
                     # Wait 5s
                     if j == 5*FPS:
-                        car.speed = -VITESSE_MIN
+                        car.speed = -speed_MIN
                         fiveSec = True
                     else:
                         j += 1
                         
                 elif thirtyCM:
                     car.accelerate(2)
-                    avoidPath = avoidObstacle(distance, car.speed, FRAME_AVOID)               
+                    avoidPath = avoidObstacle(distance, FRAME_AVOID)
                     car.facingAngle = backwardAngle + avoidPath[obstacleAvoidBuffer]
                     obstacleAvoidBuffer += 1
 
@@ -438,9 +437,9 @@ if __name__ == "__main__":
                 car.accelerate()
         
             if not done:
-                done, prevValueTournant, sens, continuer_tournant = get_wheel_angles(sensorsValues, prevValueTournant, continuerTournant)
+                done, prevValueTournant, sens, CONTINUETournant = getWheelAngles(sensorsValues, prevValueTournant, CONTINUETournant)
                 
-            acceleration_lin = [(car.speed - car.oldSpeed)/(AI_UPDATE_RATE/FPS)*np.cos(car.facingAngle), (car.speed - car.oldSpeed)/(AI_UPDATE_RATE/FPS)*np.sin(car.facingAngle)]
+            linAccelerationCar = [(car.speed - car.oldSpeed)/(AI_UPDATE_RATE/FPS)*np.cos(car.facingAngle), (car.speed - car.oldSpeed)/(AI_UPDATE_RATE/FPS)*np.sin(car.facingAngle)]
             lastFrame, sensorsValues, distValue = turnAngleSpeed(prevValueTournant, car.speed, lastFrame, car)
             
             if sensorsValues != [0, 0, 1, 0, 0] and not done:
@@ -449,26 +448,25 @@ if __name__ == "__main__":
                 else:
                     angle = car.facingAngle - 90
                 
-                a_centripete_car = a_centripete(car.oldSpeed*np.cos(car.oldFacingAngle), car.oldSpeed*np.sin(car.oldFacingAngle),
+                aCentripeteCar = aCentripete(car.oldSpeed*np.cos(car.oldFacingAngle), car.oldSpeed*np.sin(car.oldFacingAngle),
                                    car.speed*np.cos(car.facingAngle), car.speed*np.sin(car.facingAngle), angle)
-                a_car = [acceleration_lin[0]+ a_centripete_car[0], acceleration_lin[1]+ a_centripete_car[1]]
+                accelerationCar = [linAccelerationCar[0]+ aCentripeteCar[0], linAccelerationCar[1]+ aCentripeteCar[1]]
             
             else:
-                a_car = acceleration_lin
-                #a_centripete_car = 0
+                accelerationCar = linAccelerationCar
                 
             
             # La bille fonctionne en m/s2 et le vehicule en dm/s2
-            bille.mouv_bille(a_car[0]/10, a_car[1]/10)
+            bille.mouvBille(accelerationCar[0]/10, accelerationCar[1]/10)
             bille.obj.location = [bille.XYZ[0]+car.positionXYZ[0]+DISTANCE_BOL_VEHICULE*np.cos(car.facingAngle),
                              bille.XYZ[1]+car.positionXYZ[1]+DISTANCE_BOL_VEHICULE*np.sin(car.facingAngle),
-                             bille.XYZ[2]+POS_INITIALE_Z_BILLE]
+                             bille.XYZ[2]+POS_INITIALE_zBille]
                               
             if bille.XYZ[2] > 0.15:
                 mat = bpy.data.materials.new("PKHG")
                 bille.mat.diffuse_color=(1,0,0,1)
                 bille.obj.active_material=bille.mat
-                print("bille tombee---------------------")
+                print("bille tombee")
 
                 
             car.oldFacingAngle = car.facingAngle
