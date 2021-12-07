@@ -23,7 +23,7 @@ DISTANCE_X_CAPTEUR_LIGNE = 1.2682
 DISTANCE_Y_CAPTEUR_LIGNE = 0.18
 DISTANCE_X_CAPTEUR_DISTANCE = 1.212
 DISTANCE_Z_CAPTEUR_DISTANCE = 0.225
-FRAME_AVOID = 40
+FRAME_AVOID = 50
 
 BLACK = 1
 WHITE = 0
@@ -36,7 +36,7 @@ RECULER = False
 DISTANCE_ENTRE_CAPTEURS = 0.18
 DISTANCE_ENTRE_CENTRE_MASSE_ET_CAPTEUR = 1.41
 FACTOR = ((DISTANCE_ENTRE_CAPTEURS/DISTANCE_ENTRE_CENTRE_MASSE_ET_CAPTEUR)/2)*0.6
-speed_MAX = 2.5
+speed_MAX = 1.5
 speed_MIN = 0.75
 ACCELERATION_MAX = 1
 
@@ -90,6 +90,7 @@ class Bille:
         self.zBille[0] = RAYON - np.sqrt(RAYON**2-self.XYZ[0]**2)
         self.zBille[1] = RAYON - np.sqrt(RAYON**2-self.XYZ[1]**2)
         z_norm = RAYON - np.sqrt(RAYON**2-(self.XYZ[0]**2+self.XYZ[1]**2))
+        self.XYZ[2] = z_norm
         
         
 def aCentripete(v1x, v1y, v2x, v2y, angle):
@@ -260,15 +261,15 @@ def intersectionCheck(sensorList,path):
                 #print(sensor.name + " and " + path.name + " are not intersecting")
                 result.append(0)
     print(result)
-    return result
+    return resulta
 
 def avoidObstacle(distance, nbFrames):
         firstTurn = []
         middleTurn = []
         lastTurn = []
-        middleRadius = 20
-        firstRadius = 20
-        lastRadius = 20
+        middleRadius = 12
+        firstRadius = 12
+        lastRadius = 12
         angle = 0
         
         
@@ -393,6 +394,10 @@ if __name__ == "__main__":
                 
             if sensorsValues ==  [1, 1, 1, 1, 1]:
                 break
+            
+            if bille.XYZ[2] > 0.015:
+                print("bille tombee")
+                break
                 
             #Get the distance between the sensor and the obstacles
             distance = distanceCheck(distSensor, obstacles)
@@ -404,6 +409,7 @@ if __name__ == "__main__":
                 thirtyCM = False
              
             avoidDistance = car.updateAvoidDistance()
+            print("avoid distance : ", avoidDistance)
             #Obstacle detection
             if (avoidDistance - 0.05) < distance < (avoidDistance + 0.05) or isMovingAround is True:
                 isMovingAround = True
@@ -422,7 +428,7 @@ if __name__ == "__main__":
                         j += 1
                         
                 elif thirtyCM:
-                    car.accelerate(2)
+                    car.accelerate(1.25)
                     avoidPath = avoidObstacle(distance, FRAME_AVOID)
                     car.facingAngle = backwardAngle + avoidPath[obstacleAvoidBuffer]
                     obstacleAvoidBuffer += 1
@@ -442,7 +448,7 @@ if __name__ == "__main__":
                 car.accelerate()
         
             if not done:
-                done, prevValueTournant, sens, CONTINUETournant = getWheelAngles(sensorsValues, prevValueTournant, CONTINUETournant)
+                done, prevValueTournant, sens, ContinueTournant = getWheelAngles(sensorsValues, prevValueTournant, CONTINUETournant)
                 
             linAccelerationCar = [(car.speed - car.oldSpeed)/(AI_UPDATE_RATE/FPS)*np.cos(car.facingAngle), (car.speed - car.oldSpeed)/(AI_UPDATE_RATE/FPS)*np.sin(car.facingAngle)]
             lastFrame, sensorsValues, distValue = turnAngleSpeed(prevValueTournant, car.speed, lastFrame, car)
@@ -466,14 +472,7 @@ if __name__ == "__main__":
             bille.obj.location = [bille.XYZ[0]+car.positionXYZ[0]+DISTANCE_BOL_VEHICULE*np.cos(car.facingAngle),
                              bille.XYZ[1]+car.positionXYZ[1]+DISTANCE_BOL_VEHICULE*np.sin(car.facingAngle),
                              bille.XYZ[2]+POS_INITIALE_zBille]
-                              
-            if bille.XYZ[2] > 0.15:
-                mat = bpy.data.materials.new("PKHG")
-                bille.mat.diffuse_color=(1,0,0,1)
-                bille.obj.active_material=bille.mat
-                print("bille tombee")
-
-                
+                                   
             car.oldFacingAngle = car.facingAngle
             car.oldSpeed = car.speed
             
