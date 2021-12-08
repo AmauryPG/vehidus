@@ -1,0 +1,13 @@
+'''
+**********************************************************************
+* Filename    : config
+* Description : fichier de configuration de la voiture
+* Author      : Vehidus  
+* Version     : 3.0
+**********************************************************************
+'''
+turning_offset = 15
+
+forward_A = 0
+
+forward_B = 0
