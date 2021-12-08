@@ -36,7 +36,7 @@ RECULER = False
 DISTANCE_ENTRE_CAPTEURS = 0.18
 DISTANCE_ENTRE_CENTRE_MASSE_ET_CAPTEUR = 1.41
 FACTOR = ((DISTANCE_ENTRE_CAPTEURS/DISTANCE_ENTRE_CENTRE_MASSE_ET_CAPTEUR)/2)*0.6
-SPEED_MAX = 1.5
+SPEED_MAX = 1.45
 SPEED_MIN = 0.75
 ACCELERATION_MAX = 1
 
@@ -401,7 +401,6 @@ if __name__ == "__main__":
                 
             if sensorsValues ==  [1, 1, 1, 1, 1]:
                 break
-            
             # When the ball is higher then 1.5 mm the simulation will stop
             if bille.XYZ[2] > 0.015:
                 print("bille tombee")
@@ -418,8 +417,8 @@ if __name__ == "__main__":
              
             avoidDistance = car.updateAvoidDistance()
             print("avoid distance : ", avoidDistance)
-            # Obstacle detection +/- 0.5 mm
-            if (avoidDistance - 0.05) < distance < (avoidDistance + 0.05) or isMovingAround is True:
+            # Obstacle detection +/- 0.25 mm
+            if (avoidDistance - 0.03) < distance < (avoidDistance + 0.03) or isMovingAround is True:
                 isMovingAround = True
 
                 if j == 0 :
