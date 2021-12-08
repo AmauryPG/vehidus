@@ -12,7 +12,7 @@ import numpy as np
 
 import time
 from os import system
-#fonction pour clear l'outuput
+# Function that clears the output
 cls = lambda: system('cls')
 
 
@@ -36,11 +36,11 @@ RECULER = False
 DISTANCE_ENTRE_CAPTEURS = 0.18
 DISTANCE_ENTRE_CENTRE_MASSE_ET_CAPTEUR = 1.41
 FACTOR = ((DISTANCE_ENTRE_CAPTEURS/DISTANCE_ENTRE_CENTRE_MASSE_ET_CAPTEUR)/2)*0.6
-speed_MAX = 1.5
-speed_MIN = 0.75
+SPEED_MAX = 1.5
+SPEED_MIN = 0.75
 ACCELERATION_MAX = 1
 
-CONTINUETournant = True
+ContinueTurn = True
 ARRETER_TOURNANT = False
 
 RAYON = 1.4
@@ -63,12 +63,13 @@ class Bille:
         self.acceleration = [0, 0]
         
     def mouvBille(self, aCarX, aCarY):
+        # This method returns the position of the ball 
+        # It is calculated with the car's acceleration and with the actual postion of the ball
         g = 9.81
         aNx = 0
         aNy = 0
 
         dt = 1
-        # Ajouter un coef de friction
         if self.XYZ[0] == 0:
             aNx = 0
         else:
@@ -94,6 +95,8 @@ class Bille:
         
         
 def aCentripete(v1x, v1y, v2x, v2y, angle):
+    # This method calculates the centripete acceleration puts on the ball when the car turn
+    
     v2 = math.sqrt(v2x**2+v2y**2)
     if v2 == 0.0:
         return [0, 0]
@@ -102,8 +105,9 @@ def aCentripete(v1x, v1y, v2x, v2y, angle):
         a = v2**2/r
         return [a*np.cos(angle), a*np.sin(angle)]
 
-# Return DONE (True or false), Angle de roue en degre (entre -45 et 45), Sens (avant = True, arriere = False), CONTINUE TOURNANT (TRUE OR FALSE)
-def getWheelAngles(lineReader, previousValue, ContinueTournant):
+# Return DONE (True or false), the angle of the wheels (between -45° et 45°),
+# direction (FORWARD = True, NACKWARD = False), ContinueTurn (TRUE OR FALSE)
+def getWheelAngles(lineReader, previousValue, ContinueTurn):
     if lineReader == [BLACK,WHITE,WHITE,WHITE,WHITE]:
         return CONTINUE, np.arctan(FACTOR * 4), FORWARD, True
     elif lineReader == [BLACK, BLACK, WHITE, WHITE, WHITE]:
@@ -127,7 +131,7 @@ def getWheelAngles(lineReader, previousValue, ContinueTournant):
     elif lineReader == [BLACK, BLACK, BLACK, BLACK, BLACK]:
         return ARRETER, np.arctan(FACTOR * 0), FORWARD, False
     else:
-        if ContinueTournant:
+        if ContinueTurn:
             return CONTINUE, previousValue, FORWARD, True
         else:
             return CONTINUE, previousValue, FORWARD, False
@@ -149,11 +153,11 @@ class ObjectCar :
         self.oldFacingAngle = 0
         self.avoidDistance = 3.125
         
-    def accelerate(self, speedMax=speed_MAX):
+    def accelerate(self, speedMax=SPEED_MAX):
         if self.speed < speedMax:
             self.speed += ACCELERATION_MAX*1/FPS
             
-    def decelerate(self, speedMin=speed_MIN):
+    def decelerate(self, speedMin=SPEED_MIN):
         if self.speed > speedMin:
             self.speed -= ACCELERATION_MAX*1/FPS
             
@@ -175,7 +179,8 @@ class ObjectCar :
         return self.sensorsValues, self.sensorDist
         
     def updateSensorPos(self, frame):
-        # Sensor Ligne
+        # This method updates the position of the 5 sensors so they stay at the front of the car
+        
         self.lineSensorsArray[2].location = [(self.ob.location[0]+DISTANCE_X_CAPTEUR_LIGNE*np.cos(self.ob.rotation_euler[2])),
                                 self.ob.location[1]+DISTANCE_X_CAPTEUR_LIGNE*np.sin(self.ob.rotation_euler[2]),
                                 0]
@@ -211,6 +216,8 @@ class ObjectCar :
         #self.sensorDist =  distanceCheck(self.distSensor,self.obstacles)
         
 def turnAngleSpeed(angle, speed, lastFrame, car):
+    # Method that set the speed, the facing angle of the car
+    
     facingAngle = car.facingAngle
     turn = [facingAngle, facingAngle + angle]
     frames = [lastFrame,  lastFrame + AI_UPDATE_RATE]
@@ -305,7 +312,6 @@ def avoidObstacle(distance, nbFrames):
 
 def getTurningRadius(angle):
     wheelToWheelLength = 13.80
-   # wheelToWheelWidth = 13.7 - 2.6
     if angle < 55*0.01745329 or  angle > 135*0.01745329 or angle == 90*0.01745329:
         return 0
     else:
@@ -384,22 +390,24 @@ if __name__ == "__main__":
     car = ObjectCar(ob,lineSensorsArray,distSensor,path,obstacles)
     car.updateOb(lastFrame)
     prevValueTournant = 0
-    CONTINUETournant = False
+    ContinueTurn = False
     sensorsValues = [0,0,1,0,0]
     isMovingAround = False
     j, obstacleAvoidBuffer = 0, 0
     fiveSec, thirtyCM = False, False
     
+    # The simulation will go on until the car detects a 'T' or until the 5000 frames are passed
     for i in range(5000):
                 
             if sensorsValues ==  [1, 1, 1, 1, 1]:
                 break
             
+            # When the ball is higher then 1.5 mm the simulation will stop
             if bille.XYZ[2] > 0.015:
                 print("bille tombee")
                 break
                 
-            #Get the distance between the sensor and the obstacles
+            # Get the distance between the sensor and the obstacles
             distance = distanceCheck(distSensor, obstacles)
             if obstacleAvoidBuffer > 2 * FPS  and sensorsValues == [0,0,1,0,0]:
                 isMovingAround = False
@@ -410,7 +418,7 @@ if __name__ == "__main__":
              
             avoidDistance = car.updateAvoidDistance()
             print("avoid distance : ", avoidDistance)
-            #Obstacle detection
+            # Obstacle detection +/- 0.5 mm
             if (avoidDistance - 0.05) < distance < (avoidDistance + 0.05) or isMovingAround is True:
                 isMovingAround = True
 
@@ -422,11 +430,13 @@ if __name__ == "__main__":
                 elif car.speed == 0 and not fiveSec:
                     # Wait 5s
                     if j == 5*FPS:
-                        car.speed = -speed_MIN
+                        # Go backward
+                        car.speed = -SPEED_MIN
                         fiveSec = True
                     else:
                         j += 1
                         
+                # When the car is at 30 cm, it can start avoiding the obstacle
                 elif thirtyCM:
                     car.accelerate(1.25)
                     avoidPath = avoidObstacle(distance, FRAME_AVOID)
@@ -448,11 +458,12 @@ if __name__ == "__main__":
                 car.accelerate()
         
             if not done:
-                done, prevValueTournant, sens, ContinueTournant = getWheelAngles(sensorsValues, prevValueTournant, CONTINUETournant)
+                done, prevValueTournant, sens, ContinueTurn = getWheelAngles(sensorsValues, prevValueTournant, ContinueTurn)
                 
             linAccelerationCar = [(car.speed - car.oldSpeed)/(AI_UPDATE_RATE/FPS)*np.cos(car.facingAngle), (car.speed - car.oldSpeed)/(AI_UPDATE_RATE/FPS)*np.sin(car.facingAngle)]
             lastFrame, sensorsValues, distValue = turnAngleSpeed(prevValueTournant, car.speed, lastFrame, car)
             
+            # The correct angle for the centripete acceleration is calculated 
             if sensorsValues != [0, 0, 1, 0, 0] and not done:
                 if sensorsValues[0] == 1 or sensorsValues[1] == 1:
                     angle = car.facingAngle + 90
@@ -467,7 +478,7 @@ if __name__ == "__main__":
                 accelerationCar = linAccelerationCar
                 
             
-            # La bille fonctionne en m/s2 et le vehicule en dm/s2
+            # The ball is in m/s2 and the car is in dm/s2, an amelioration would be that everything is in m/s2
             bille.mouvBille(accelerationCar[0]/10, accelerationCar[1]/10)
             bille.obj.location = [bille.XYZ[0]+car.positionXYZ[0]+DISTANCE_BOL_VEHICULE*np.cos(car.facingAngle),
                              bille.XYZ[1]+car.positionXYZ[1]+DISTANCE_BOL_VEHICULE*np.sin(car.facingAngle),
