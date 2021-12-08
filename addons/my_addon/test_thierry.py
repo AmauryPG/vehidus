@@ -268,7 +268,7 @@ def intersectionCheck(sensorList,path):
                 #print(sensor.name + " and " + path.name + " are not intersecting")
                 result.append(0)
     print(result)
-    return resulta
+    return result
 
 def avoidObstacle(distance, nbFrames):
         firstTurn = []
@@ -286,7 +286,7 @@ def avoidObstacle(distance, nbFrames):
         arcLength = circ/arcAngle
         turningAngle = getTurningAngle(firstRadius)
         for f in range(nbFrames):
-            angle -= turningAngle/nbFrames
+            angle += turningAngle/nbFrames
             firstTurn.append(angle)
             
 # second turn
@@ -295,7 +295,7 @@ def avoidObstacle(distance, nbFrames):
         arcLength = circ/arcAngle
         turningAngle = getTurningAngle(middleRadius)
         for f in range(2*nbFrames):
-            angle += turningAngle/nbFrames
+            angle -= turningAngle/nbFrames
             middleTurn.append(angle)
 
 # last turn
@@ -304,7 +304,7 @@ def avoidObstacle(distance, nbFrames):
         arcLength = circ/arcAngle
         turningAngle = getTurningAngle(lastRadius)
         for f in range(nbFrames):
-            angle -= turningAngle/nbFrames
+            angle += turningAngle/nbFrames
             lastTurn.append(angle)
             
         return firstTurn + middleTurn + lastTurn
